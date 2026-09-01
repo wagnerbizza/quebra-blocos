@@ -1,5 +1,5 @@
 // ==============================================================================
-// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA E FÍSICA COMPLETA
+// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA E FÍSICA COMPLETA (ATUALIZADO)
 // ==============================================================================
 
 // Captura a referência da tela Canvas do HTML
@@ -25,35 +25,31 @@ const btnRight = document.getElementById('btn-right');
 // Variável para armazenar a instância da Web Audio API
 let audioCtx = null;
 
-// Inicializa ou retoma o contexto de áudio do navegador (exigido por políticas de navegadores)
+// Inicializa ou retoma o contexto de áudio do navegador
 function initAudio() {
   if (!audioCtx) {
-    // Cria um novo contexto de áudio sintetizado se ele não existir
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
   if (audioCtx.state === 'suspended') {
-    // Ativa o som caso o navegador o tenha colocado em estado de suspensão
     audioCtx.resume();
   }
 }
 
-// Sintetizador de efeitos sonoros sem uso de arquivos externos de áudio
+// Sintetizador de efeitos sonoros
 function playSound(type) {
   try {
-    initAudio(); // Garante áudio ativo
+    initAudio();
     if (!audioCtx) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Cria um oscilador (gerador de ondas sonoras) e um nó de ganho (volume)
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
 
-    const now = audioCtx.currentTime; // Marca o tempo preciso de início do som
+    const now = audioCtx.currentTime;
 
     if (type === 'hit') {
-      // Som de batida rápido e grave (Triangular)
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(450, now);
       osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
@@ -62,7 +58,6 @@ function playSound(type) {
       osc.start(now);
       osc.stop(now + 0.12);
     } else if (type === 'powerup_green' || type === 'powerup_blue') {
-      // Som agudo ascendente para power-ups positivos (Senoide)
       osc.type = 'sine';
       osc.frequency.setValueAtTime(400, now);
       osc.frequency.exponentialRampToValueAtTime(800, now + 0.18);
@@ -71,7 +66,6 @@ function playSound(type) {
       osc.start(now);
       osc.stop(now + 0.18);
     } else if (type === 'powerup_red' || type === 'powerup_yellow') {
-      // Som descendente áspero para debuffs (Dente de serra)
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(500, now);
       osc.frequency.exponentialRampToValueAtTime(150, now + 0.18);
@@ -80,7 +74,6 @@ function playSound(type) {
       osc.start(now);
       osc.stop(now + 0.18);
     } else if (type === 'count') {
-      // Bip curto da contagem regressiva
       osc.type = 'sine';
       osc.frequency.setValueAtTime(520, now);
       gain.gain.setValueAtTime(0.3, now);
@@ -88,7 +81,6 @@ function playSound(type) {
       osc.start(now);
       osc.stop(now + 0.12);
     } else if (type === 'go') {
-      // Tom alto indicando o início do jogo ("JÁ!")
       osc.type = 'sine';
       osc.frequency.setValueAtTime(880, now);
       gain.gain.setValueAtTime(0.5, now);
@@ -115,11 +107,11 @@ function createExplosion(x, y, color) {
     particles.push({
       x: x,
       y: y,
-      dx: (Math.random() - 0.5) * 6, // Velocidade aleatória no eixo X
-      dy: (Math.random() - 0.5) * 6, // Velocidade aleatória no eixo Y
-      radius: Math.random() * 3 + 1,  // Raio variado de cada partícula
-      color: color,                  // Cor herdada do bloco destruído
-      life: 20                       // Tempo de vida em frames
+      dx: (Math.random() - 0.5) * 6,
+      dy: (Math.random() - 0.5) * 6,
+      radius: Math.random() * 3 + 1,
+      color: color,
+      life: 20
     });
   }
 }
@@ -128,27 +120,26 @@ function createExplosion(x, y, color) {
 function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.dx; // Move no eixo X
-    p.y += p.dy; // Move no eixo Y
-    p.life--;    // Reduz tempo de vida
+    p.x += p.dx;
+    p.y += p.dy;
+    p.life--;
 
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
-    ctx.globalAlpha = p.life / 20; // Cria efeito de desvanecimento (fade-out)
+    ctx.globalAlpha = p.life / 20;
     ctx.fill();
     ctx.closePath();
-    ctx.globalAlpha = 1.0; // Reseta a opacidade global do canvas
+    ctx.globalAlpha = 1.0;
 
     if (p.life <= 0) {
-      particles.splice(i, 1); // Remove partículas "mortas" da memória
+      particles.splice(i, 1);
     }
   }
 }
 
 // Variáveis Globais de Estado do Jogo
 let score = 0;
-// Recupera o recorde salvo no navegador ou define 0 por padrão
 let highScore = localStorage.getItem('breakout_highscore') || 0;
 let level = 1;
 let lives = 3;
@@ -166,10 +157,10 @@ const paddle = {
   largeWidth: 120,
   minWidth: 25,
   height: 12,
-  x: (canvas.width - 75) / 2, // Centraliza a raquete horizontalmente
-  y: canvas.height - 25,      // Posiciona próximo ao fundo
-  speed: 7,                   // Velocidade de deslocamento lateral
-  status: 'normal'            // Estado atual (normal, expanded, shrunk)
+  x: (canvas.width - 75) / 2,
+  y: canvas.height - 25,
+  speed: 7,
+  status: 'normal'
 };
 
 // Monitora o estado de pressionamento das teclas direcionais
@@ -180,34 +171,34 @@ const ball = {
   x: canvas.width / 2,
   y: canvas.height - 40,
   radius: 7,
-  baseSpeed: 4.5, // Velocidade base de início
-  speed: 4.5,     // Velocidade dinâmica atual
-  dx: 3.5,        // Direção/vetor X
-  dy: -3.5        // Direção/vetor Y (negativo move para cima)
+  baseSpeed: 4.5,
+  speed: 4.5,
+  dx: 3.5,
+  dy: -3.5
 };
 
 // Configurações da Grade de Blocos
-const brickRowCount = 5;      // Linhas de blocos
-const brickColumnCount = 8;   // Colunas de blocos
-const brickPadding = 8;       // Espaço entre blocos
-const brickOffsetTop = 40;    // Distância do topo
-const brickOffsetLeft = 28;   // Distância da borda esquerda
-const brickWidth = 65;        // Largura de cada bloco
-const brickHeight = 18;       // Altura de cada bloco
+const brickRowCount = 5;
+const brickColumnCount = 8;
+const brickPadding = 8;
+const brickOffsetTop = 40;
+const brickOffsetLeft = 28;
+const brickWidth = 65;
+const brickHeight = 18;
 
-let bricks = []; // Matriz de blocos
+let bricks = [];
 
 // Preenche e reinicia a matriz de blocos
 function initBricks() {
   bricks = [];
-  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6']; // Cores das linhas
+  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
   for (let c = 0; c < brickColumnCount; c++) {
     bricks[c] = [];
     for (let r = 0; r < brickRowCount; r++) {
       bricks[c][r] = {
         x: 0,
         y: 0,
-        status: 1, // 1 = visível/ativo, 0 = destruído
+        status: 1,
         color: colors[r % colors.length]
       };
     }
@@ -219,29 +210,27 @@ let powerups = [];
 
 // Sorteia e cria um item de power-up quando um bloco é quebrado
 function spawnPowerup(x, y) {
-  // Aumenta a chance de queda conforme o nível sobe (máximo 35%)
   const dropChance = Math.min(0.35, 0.25 + level * 0.02);
   
   if (Math.random() < dropChance) {
     const rand = Math.random();
     let type = 'green';
 
-    // Sorteio de tipos baseados em probabilidades definidas
     if (rand < 0.25) {
-      type = 'red';     // 25% chance: Encolhe raquete
+      type = 'red';
     } else if (rand < 0.70) {
-      type = 'yellow';  // 45% chance: Bola mais rápida
+      type = 'yellow';
     } else if (rand < 0.85) {
-      type = 'blue';    // 15% chance: Bola mais lenta
+      type = 'blue';
     } else {
-      type = 'green';   // 15% chance: Aumenta raquete
+      type = 'green';
     }
 
     powerups.push({
       x: x,
       y: y,
       radius: 6,
-      dy: 2, // Velocidade de queda do item
+      dy: 2,
       type: type
     });
   }
@@ -257,24 +246,23 @@ function updateBallVelocity() {
 // Aplica as regras de efeito ao pegar cada cápsula/item
 function applyPowerupEffect(type) {
   if (type === 'green') {
-    paddle.width = paddle.largeWidth; // Expande raquete
+    paddle.width = paddle.largeWidth;
     paddle.status = 'expanded';
     playSound('powerup_green');
   } else if (type === 'red') {
-    paddle.width = Math.max(paddle.minWidth, paddle.width - 15); // Encolhe raquete
+    paddle.width = Math.max(paddle.minWidth, paddle.width - 15);
     if (paddle.width < paddle.baseWidth) paddle.status = 'shrunk';
     playSound('powerup_red');
   } else if (type === 'blue') {
-    ball.speed = Math.max(3.0, ball.speed - 1.2); // Fica mais lenta
+    ball.speed = Math.max(3.0, ball.speed - 1.2);
     updateBallVelocity();
     playSound('powerup_blue');
   } else if (type === 'yellow') {
-    ball.speed = Math.min(9.5, ball.speed + 1.5); // Fica mais rápida
+    ball.speed = Math.min(9.5, ball.speed + 1.5);
     updateBallVelocity();
     playSound('powerup_yellow');
   }
 
-  // Previne que a raquete saia dos limites ao expandir perto da parede
   if (paddle.x + paddle.width > canvas.width) {
     paddle.x = canvas.width - paddle.width;
   }
@@ -285,7 +273,7 @@ window.addEventListener('keydown', (e) => {
   initAudio();
   if (e.key === 'ArrowRight' || e.key === 'Right' || e.key === 'd' || e.key === 'D') keys.right = true;
   if (e.key === 'ArrowLeft' || e.key === 'Left' || e.key === 'a' || e.key === 'A') keys.left = true;
-  if (e.key === 'p' || e.key === 'P') togglePause(); // Tecla P pausa o jogo
+  if (e.key === 'p' || e.key === 'P') togglePause();
 });
 
 // Eventos de teclado (soltar teclas)
@@ -344,17 +332,15 @@ rankingBtn.addEventListener('click', () => { initAudio(); showLeaderboard(); });
 
 // Alterna o estado de Pausa do jogo
 function togglePause() {
-  if (isCountingDown) return; // Impede pausar durante a contagem
+  if (isCountingDown) return;
 
   if (isPaused) {
-    // Se estava pausado, faz a contagem regressiva antes de voltar a rodar
     startCountdown(() => {
       isPaused = false;
       pauseBtn.textContent = 'Pausar';
       loop();
     });
   } else {
-    // Interrompe o loop do jogo e marca como pausado
     isPaused = true;
     pauseBtn.textContent = 'Continuar';
     cancelAnimationFrame(animationId);
@@ -364,7 +350,7 @@ function togglePause() {
 // Executa a contagem regressiva 3, 2, 1, JÁ!
 function startCountdown(onComplete) {
   isCountingDown = true;
-  countdownOverlay.classList.remove('hidden'); // Exibe a camada escura
+  countdownOverlay.classList.remove('hidden');
   let count = 3;
   countdownText.textContent = count;
   playSound('count');
@@ -378,27 +364,34 @@ function startCountdown(onComplete) {
       countdownText.textContent = 'JÁ!';
       playSound('go');
     } else {
-      clearInterval(timer); // Finaliza o temporizador
-      countdownOverlay.classList.add('hidden'); // Esconde o overlay
+      clearInterval(timer);
+      countdownOverlay.classList.add('hidden');
       isCountingDown = false;
-      if (onComplete) onComplete(); // Executa o callback após o fim da contagem
+      if (onComplete) onComplete();
     }
   }, 600);
 }
 
-// Reposiciona bola e raquete após perder vida ou subir de nível
+// 🛠️ FIX 2: Reposiciona bola e raquete com sorteio angular aleatório para a bola
 function resetBallAndPaddle() {
   paddle.width = paddle.baseWidth;
   paddle.status = 'normal';
   paddle.x = (canvas.width - paddle.width) / 2;
   
-  ball.speed = ball.baseSpeed + (level - 1) * 0.5; // Ajusta a velocidade base pelo nível
+  // Limpa estado residual das teclas direcionais
+  keys.left = false;
+  keys.right = false;
+
+  ball.speed = ball.baseSpeed + (level - 1) * 0.5;
   ball.x = canvas.width / 2;
   ball.y = canvas.height - 40;
   
-  // Define direção aleatória inicial no eixo X
-  ball.dx = (Math.random() > 0.5 ? 1 : -1) * (ball.speed * 0.7);
-  ball.dy = -Math.abs(ball.speed * 0.7); // Sempre sobe no início
+  // Gera variação angular aleatória real na saída da bola
+  const randomAngle = (Math.random() * (Math.PI / 2.5)) - (Math.PI / 5);
+  const direction = Math.random() > 0.5 ? 1 : -1;
+
+  ball.dx = ball.speed * Math.sin(randomAngle) * direction;
+  ball.dy = -Math.abs(ball.speed * Math.cos(randomAngle));
 }
 
 // Reinicia o jogo por completo ao perder ou clicar em reiniciar
@@ -427,26 +420,25 @@ function resetGame() {
 function updateHUD() {
   scoreEl.textContent = score;
   levelEl.textContent = level;
-  livesEl.textContent = '❤️'.repeat(Math.max(0, lives)); // Repete os corações dinamicamente
+  livesEl.textContent = '❤️'.repeat(Math.max(0, lives));
   if (score > highScore) {
     highScore = score;
-    localStorage.setItem('breakout_highscore', highScore); // Salva no navegador
+    localStorage.setItem('breakout_highscore', highScore);
     highScoreEl.textContent = highScore;
   }
 }
 
-// Funções de Desenho no Canvas (Renderização)
+// Funções de Desenho no Canvas
 function drawPaddle() {
   ctx.beginPath();
-  ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 5); // Desenha retângulo arredondado
+  ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 5);
   
-  // Altera a cor da raquete dependendo dos power-ups
   if (paddle.status === 'expanded') {
-    ctx.fillStyle = '#22c55e'; // Verde se expandida
+    ctx.fillStyle = '#22c55e';
   } else if (paddle.status === 'shrunk') {
-    ctx.fillStyle = '#ef4444'; // Vermelho se encolhida
+    ctx.fillStyle = '#ef4444';
   } else {
-    ctx.fillStyle = '#38bdf8'; // Azul padrão
+    ctx.fillStyle = '#38bdf8';
   }
   
   ctx.fill();
@@ -455,15 +447,14 @@ function drawPaddle() {
 
 function drawBall() {
   ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); // Desenha a bola como um círculo perfeito
+  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
   
-  // Altera a cor da bola dependendo da velocidade
   if (ball.speed > 6.0) {
-    ctx.fillStyle = '#f97316'; // Laranja se muito rápida
+    ctx.fillStyle = '#f97316';
   } else if (ball.speed < 4.0) {
-    ctx.fillStyle = '#38bdf8'; // Azul se lenta
+    ctx.fillStyle = '#38bdf8';
   } else {
-    ctx.fillStyle = '#f8fafc'; // Branco padrão
+    ctx.fillStyle = '#f8fafc';
   }
 
   ctx.fill();
@@ -474,7 +465,7 @@ function drawBricks() {
   for (let c = 0; c < brickColumnCount; c++) {
     for (let r = 0; r < brickRowCount; r++) {
       const b = bricks[c][r];
-      if (b.status === 1) { // Só desenha blocos ativos
+      if (b.status === 1) {
         const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
         const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
         b.x = brickX;
@@ -501,10 +492,10 @@ function drawPowerups() {
 
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.shadowBlur = 8;        // Efeito de brilho em volta do item
+    ctx.shadowBlur = 8;
     ctx.shadowColor = color;
     ctx.closePath();
-    ctx.shadowBlur = 0;        // Reseta o brilho
+    ctx.shadowBlur = 0;
   });
 }
 
@@ -513,35 +504,31 @@ function movePaddle() {
   if (keys.right) paddle.x += paddle.speed;
   if (keys.left) paddle.x -= paddle.speed;
 
-  // Limites das paredes laterais
   if (paddle.x < 0) paddle.x = 0;
   if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
 }
 
 function moveBall() {
-  ball.x += ball.dx; // Atualiza posição X
-  ball.y += ball.dy; // Atualiza posição Y
+  ball.x += ball.dx;
+  ball.y += ball.dy;
 
-  // Colisão com as paredes laterais (Esquerda / Direita)
   if (ball.x + ball.radius >= canvas.width) {
     ball.x = canvas.width - ball.radius;
-    ball.dx = -Math.abs(ball.dx); // Inverte vetor X
+    ball.dx = -Math.abs(ball.dx);
     playSound('hit');
   } 
   else if (ball.x - ball.radius <= 0) {
     ball.x = ball.radius;
-    ball.dx = Math.abs(ball.dx); // Inverte vetor X
+    ball.dx = Math.abs(ball.dx);
     playSound('hit');
   }
 
-  // Colisão com o teto
   if (ball.y - ball.radius <= 0) {
     ball.y = ball.radius;
-    ball.dy = Math.abs(ball.dy); // Inverte vetor Y (manda para baixo)
+    ball.dy = Math.abs(ball.dy);
     playSound('hit');
   }
 
-  // Colisão angular inteligente com a Raquete
   if (
     ball.y + ball.radius >= paddle.y &&
     ball.y - ball.radius <= paddle.y + paddle.height &&
@@ -549,11 +536,8 @@ function moveBall() {
     ball.x <= paddle.x + paddle.width &&
     ball.dy > 0
   ) {
-    // Calcula o ponto de impacto relativo na raquete (-1 no canto esquerdo, 1 no canto direito)
     let collidePoint = ball.x - (paddle.x + paddle.width / 2);
     collidePoint = collidePoint / (paddle.width / 2);
-    
-    // Converte o ponto de colisão em um ângulo de rebate em radianos (máximo 60 graus)
     let angle = collidePoint * (Math.PI / 3);
 
     ball.dx = ball.speed * Math.sin(angle);
@@ -562,13 +546,13 @@ function moveBall() {
     playSound('hit');
   }
 
-  // Perder Vida (Bola caindo no fundo da tela)
+  // Perder Vida
   if (ball.y + ball.radius > canvas.height) {
     lives--;
     updateHUD();
     if (lives <= 0) {
       playSound('hit');
-      saveLeaderboardScore(score); // Salva pontuação no Ranking
+      saveLeaderboardScore(score);
       resetGame();
     } else {
       resetBallAndPaddle();
@@ -585,9 +569,8 @@ function moveBall() {
 function movePowerups() {
   for (let i = powerups.length - 1; i >= 0; i--) {
     const p = powerups[i];
-    p.y += p.dy; // Faz o item cair
+    p.y += p.dy;
 
-    // Verifica se a raquete pegou a cápsula de power-up
     if (
       p.y + p.radius >= paddle.y &&
       p.x >= paddle.x &&
@@ -595,18 +578,16 @@ function movePowerups() {
     ) {
       createExplosion(p.x, p.y, '#ffffff');
       applyPowerupEffect(p.type);
-      powerups.splice(i, 1); // Remove item coletado
+      powerups.splice(i, 1);
       continue;
     }
 
-    // Remove se cair fora da tela sem ser coletado
     if (p.y - p.radius > canvas.height) {
       powerups.splice(i, 1);
     }
   }
 }
 
-// Colisão com os Blocos
 function collisionDetection() {
   let activeBricks = 0;
   for (let c = 0; c < brickColumnCount; c++) {
@@ -614,29 +595,27 @@ function collisionDetection() {
       const b = bricks[c][r];
       if (b.status === 1) {
         activeBricks++;
-        // Detecção de sobreposição da caixa delimitadora do bloco com a bola
         if (
           ball.x + ball.radius > b.x &&
           ball.x - ball.radius < b.x + brickWidth &&
           ball.y + ball.radius > b.y &&
           ball.y - ball.radius < b.y + brickHeight
         ) {
-          ball.dy = -ball.dy; // Rebate a bola
-          b.status = 0;       // Destrói o bloco
-          score += 10;        // Soma pontuação
-          createExplosion(b.x + brickWidth / 2, b.y + brickHeight / 2, b.color); // Explosão
+          ball.dy = -ball.dy;
+          b.status = 0;
+          score += 10;
+          createExplosion(b.x + brickWidth / 2, b.y + brickHeight / 2, b.color);
           updateHUD();
           playSound('hit');
-          spawnPowerup(b.x + brickWidth / 2, b.y + brickHeight); // Tenta gerar item
+          spawnPowerup(b.x + brickWidth / 2, b.y + brickHeight);
         }
       }
     }
   }
 
-  // Avançar de Nível ao limpar a tela inteira
   if (activeBricks === 0) {
     level++;
-    ball.baseSpeed += 0.5; // Aumenta a dificuldade
+    ball.baseSpeed += 0.5;
     updateHUD();
     initBricks();
     resetBallAndPaddle();
@@ -647,36 +626,33 @@ function collisionDetection() {
   }
 }
 
-// 🏆 LÓGICA DO RANKING DO CAMPEONATO (LOCALSTORAGE)
-const MAX_LEADERBOARD_ENTRIES = 5; // Limite de posições no ranking
+// 🏆 LÓGICA DO RANKING DO CAMPEONATO
+const MAX_LEADERBOARD_ENTRIES = 5;
 
-// Lê os dados do ranking armazenados no navegador
 function getLeaderboard() {
   return JSON.parse(localStorage.getItem('breakout_leaderboard')) || [];
 }
 
-// Solicita o nome e grava a pontuação no banco de dados local
+// 🛠️ FIX 1: Limpa as teclas para a raquete não ir para o canto sozinha após o prompt
 function saveLeaderboardScore(newScore) {
   if (newScore <= 0) return;
 
   let leaderboard = getLeaderboard();
   
-  // Exibe a caixa de diálogo pedindo o nome do jogador
   const playerName = prompt(`🎉 Fim de jogo! Você fez ${newScore} pontos.\nDigite seu nome para o Ranking:`) || "Jogador Anônimo";
 
-  // Adiciona a pontuação atual
+  // Reseta estado das teclas
+  keys.left = false;
+  keys.right = false;
+
   leaderboard.push({ name: playerName.trim().substring(0, 12), score: newScore });
-  // Ordena a lista da maior pontuação para a menor
   leaderboard.sort((a, b) => b.score - a.score);
-  // Mantém apenas os 5 melhores registros
   leaderboard = leaderboard.slice(0, MAX_LEADERBOARD_ENTRIES);
   
-  // Grava novamente no LocalStorage
   localStorage.setItem('breakout_leaderboard', JSON.stringify(leaderboard));
-  showLeaderboard(); // Exibe a modal atualizada
+  showLeaderboard();
 }
 
-// Renderiza o ranking dentro da janela Modal
 function showLeaderboard() {
   const leaderboard = getLeaderboard();
   const listEl = document.getElementById('leaderboard-list');
@@ -688,7 +664,6 @@ function showLeaderboard() {
   if (leaderboard.length === 0) {
     listEl.innerHTML = '<li>Nenhuma pontuação salva ainda.</li>';
   } else {
-    // Insere cada elemento no formato <li>
     leaderboard.forEach((entry) => {
       const li = document.createElement('li');
       li.innerHTML = `<strong>${entry.name}</strong>: ${entry.score} pts`;
@@ -696,38 +671,34 @@ function showLeaderboard() {
     });
   }
 
-  modal.classList.remove('hidden'); // Exibe a modal
+  modal.classList.remove('hidden');
 }
 
-// Botão para fechar a modal do ranking
 document.getElementById('close-leaderboard-btn')?.addEventListener('click', () => {
   document.getElementById('leaderboard-modal')?.classList.add('hidden');
 });
 
-// Loop Principal de Atualização do Jogo
+// Loop Principal
 function loop() {
-  if (isPaused || isCountingDown) return; // Interrompe caso o jogo esteja parado
+  if (isPaused || isCountingDown) return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa a tela anterior
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 1. Desenha todos os elementos estáticos e dinâmicos
   drawBricks();
   drawPaddle();
   drawBall();
   drawPowerups();
   updateParticles();
 
-  // 2. Calcula posições e colisões para o próximo quadro
   movePaddle();
   moveBall();
   movePowerups();
   collisionDetection();
 
-  // 3. Solicita ao navegador a execução do próximo frame (~60 FPS)
   animationId = requestAnimationFrame(loop);
 }
 
-// Inicialização da primeira partida
+// Inicialização
 initBricks();
 updateHUD();
 startCountdown(() => {
