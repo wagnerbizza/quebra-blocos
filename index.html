@@ -1,52 +1,77 @@
 <!DOCTYPE html>
+<!-- Define que o documento é HTML5 moderno -->
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Define o conjunto de caracteres para aceitar acentos em português -->
+  <meta charset="UTF-8" />
+  <!-- Ajusta a escala da tela para funcionar corretamente em dispositivos móveis (responsivo) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Título que aparece na aba do navegador -->
   <title>Quebra-Blocos Arcade Pro</title>
-  <link rel="stylesheet" href="style.css">
+  <!-- Vincula a folha de estilos externa (CSS) a este documento HTML -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Conteiner principal que centraliza e agrupa todos os elementos do jogo -->
   <div class="game-container">
-    <!-- Cabeçalho (HUD) -->
-    <header class="hud">
-      <div class="hud-item left">
-        <span class="hud-label">RECORDE</span>
-        <span id="high-score" class="hud-value">0</span>
-      </div>
-      <div class="hud-item center">
-        <span class="hud-label">PONTOS</span>
-        <span id="score" class="hud-value score-highlight">0</span>
-      </div>
-      <div class="hud-item right">
-        <div class="hud-sub">
-          <span class="hud-label">FASE</span>
-          <span id="level" class="hud-value-small">1</span>
-        </div>
-        <div class="hud-sub">
-          <span class="hud-label">VIDAS</span>
-          <span id="lives" class="hud-hearts">❤️❤️❤️</span>
-        </div>
-      </div>
-    </header>
+    
+    <!-- Painel superior de informações (HUD - Heads-Up Display) -->
+    <div class="hud">
+      <!-- Exibe os pontos da partida atual -->
+      <div class="hud-item">Pontos: <span id="score">0</span></div>
+      <!-- Exibe a maior pontuação já alcançada -->
+      <div class="hud-item">Recorde: <span id="high-score">0</span></div>
+      <!-- Exibe a fase/nível atual -->
+      <div class="hud-item">Nível: <span id="level">1</span></div>
+      <!-- Exibe a quantidade de vidas restantes via ícones de coração -->
+      <div class="hud-item">Vidas: <span id="lives">❤️❤️❤️</span></div>
+    </div>
 
-    <!-- Canvas do Jogo -->
+    <!-- Envoltório que segura o Canvas e telas sobrepostas -->
     <div class="canvas-wrapper">
-      <canvas id="gameCanvas" width="640" height="480"></canvas>
+      <!-- Elemento gráfico onde o jogo é desenhado via JavaScript (largura 600px, altura 400px) -->
+      <canvas id="gameCanvas" width="600" height="400"></canvas>
       
-      <!-- Overlay da Contagem Regressiva -->
-      <div id="countdown-overlay" class="countdown-overlay hidden">
+      <!-- Overlay de tela preta para a contagem regressiva (3, 2, 1, JÁ!) -->
+      <div id="countdown-overlay" class="hidden">
+        <!-- Texto onde a contagem regressiva é atualizada dinamicamente -->
         <span id="countdown-text">3</span>
       </div>
     </div>
 
-    <!-- Controles da Interface -->
-    <footer class="controls">
-      <button id="pause-btn" class="btn">Pausar</button>
-      <button id="restart-btn" class="btn">Recomeçar</button>
-    </footer>
+    <!-- Painel com botões de ação e controle do jogo -->
+    <div class="controls">
+      <!-- Botão para pausar ou retomar a partida -->
+      <button id="pause-btn">Pausar</button>
+      <!-- Botão para reiniciar o jogo do zero -->
+      <button id="restart-btn">Reiniciar</button>
+      <!-- Botão para abrir a janela do ranking de pontuações -->
+      <button id="ranking-btn">🏆 Ranking</button>
+    </div>
+
+    <!-- Controles virtuais visíveis para telas sensíveis ao toque (Mobile) -->
+    <div class="mobile-controls">
+      <!-- Botão para mover a raquete para a esquerda -->
+      <button id="btn-left">◀</button>
+      <!-- Botão para mover a raquete para a direita -->
+      <button id="btn-right">▶</button>
+    </div>
   </div>
 
+  <!-- Janela modal flutuante que exibe o Ranking dos Top 5 jogadores -->
+  <div id="leaderboard-modal" class="modal hidden">
+    <!-- Caixa interna com conteúdo da modal -->
+    <div class="modal-content">
+      <!-- Título da janela do ranking -->
+      <h2>🏆 Ranking do Campeonato</h2>
+      <!-- Lista ordenada (1º, 2º, 3º...) que receberá os nomes via JS -->
+      <ol id="leaderboard-list"></ol>
+      <!-- Botão para fechar a janela modal -->
+      <button id="close-leaderboard-btn">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Vincula o script JavaScript com a lógica e física do jogo -->
   <script src="script.js"></script>
 </body>
 </html>

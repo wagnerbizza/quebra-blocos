@@ -1,174 +1,181 @@
+/* Reseta o modelo de caixa global e impede seleção de texto acidental ao clicar rápido */
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  user-select: none;
+  box-sizing: border-box; /* Inclui bordas e padding no cálculo do tamanho dos elementos */
+  user-select: none;     /* Impede que o usuário selecione textos ao clicar rapidamente */
 }
 
+/* Configurações básicas da página inteira */
 body {
-  background-color: #0f172a;
-  color: #f8fafc;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 10px;
+  margin: 0;                /* Remove margens padrão do navegador */
+  padding: 0;               /* Remove preenchimentos padrão */
+  background-color: #0f172a; /* Define fundo azul-escuro noturno */
+  color: #f8fafc;           /* Define a cor padrão do texto para branco suave */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Define a tipografia */
+  display: flex;            /* Ativa layout flexível para centralização */
+  justify-content: center;  /* Centraliza o conteúdo horizontalmente */
+  align-items: center;      /* Centraliza o conteúdo verticalmente */
+  min-height: 100vh;        /* Garante que o corpo ocupe 100% da altura da tela */
 }
 
+/* Container central do jogo */
 .game-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #1e293b;
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;          /* Organiza os elementos internos em fluxo vertical */
+  flex-direction: column; /* Alinha os filhos de cima para baixo */
+  align-items: center;    /* Centraliza os filhos horizontalmente */
+  gap: 15px;              /* Espaçamento uniforme entre cada elemento interno */
+  max-width: 100%;        /* Ajusta a largura máxima para não estourar telas pequenas */
+  padding: 10px;          /* Espaçamento interno de segurança */
 }
 
-/* HUD / Painel Superior */
+/* Painel superior de estatísticas (Pontos, Vidas, etc.) */
 .hud {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  max-width: 640px;
-  margin-bottom: 10px;
-  padding: 8px 15px;
-  background: #0f172a;
-  border-radius: 8px;
-  border: 1px solid #334155;
+  display: flex;       /* Alinha os dados lado a lado */
+  gap: 20px;           /* Espaço de 20px entre cada dado (Pontos, Recorde, Vidas) */
+  font-size: 1.1rem;   /* Tamanho da fonte ligeiramente ampliado */
+  font-weight: bold;   /* Texto em negrito */
+  background: #1e293b; /* Fundo cinza-azulado escuro */
+  padding: 10px 20px;  /* Preenchimento interno (10px cima/baixo, 20px lados) */
+  border-radius: 8px;  /* Bordas arredondadas */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); /* Sombra suave para dar profundidade */
 }
 
-.hud-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.hud-item.left {
-  align-items: flex-start;
-  flex: 1;
-}
-
-.hud-item.center {
-  align-items: center;
-  flex: 1;
-}
-
-.hud-item.right {
-  align-items: flex-end;
-  flex: 1;
-  gap: 2px;
-}
-
-.hud-label {
-  font-size: 0.65rem;
-  color: #94a3b8;
-  letter-spacing: 1px;
-  font-weight: bold;
-}
-
-.hud-value {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #f1f5f9;
-}
-
-/* Pontuação Atual Destacada no Centro */
-.score-highlight {
-  font-size: 1.8rem;
-  color: #38bdf8;
-  text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
-}
-
-.hud-sub {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.hud-value-small {
-  font-size: 0.95rem;
-  font-weight: bold;
-  color: #f1f5f9;
-}
-
-.hud-hearts {
-  font-size: 0.95rem;
-  letter-spacing: 2px;
-}
-
-/* Canvas e Overlay */
+/* Envoltório da área de jogo (Canvas) */
 .canvas-wrapper {
-  position: relative;
-  width: 640px;
-  height: 480px;
+  position: relative;                             /* Permite posicionar a contagem por cima */
+  border: 4px solid #38bdf8;                      /* Borda azul-claro brilhante de 4px */
+  border-radius: 12px;                            /* Cantos arredondados na moldura */
+  overflow: hidden;                               /* Corta qualquer conteúdo que saia da borda */
+  box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.3); /* Brilho neon ao redor do jogo */
 }
 
+/* Tela física onde o jogo é renderizado */
 canvas {
-  background-color: #020617;
-  border-radius: 8px;
-  border: 2px solid #334155;
-  display: block;
+  background: #020617; /* Fundo preto quase puro para a área da partida */
+  display: block;      /* Elimina espaços vazios indesejados abaixo do canvas */
 }
 
-/* Overlay da Contagem Regressiva */
-.countdown-overlay {
-  position: absolute;
+/* Camada transparente para exibição da contagem 3, 2, 1 */
+#countdown-overlay {
+  position: absolute;             /* Posiciona a camada exatamente por cima do Canvas */
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(2, 6, 23, 0.65);
-  display: flex;
+  background: rgba(2, 6, 23, 0.85); /* Fundo escuro semitransparente (85% opacidade) */
+  display: flex;                  /* Centraliza o número da contagem */
+  justify-content: center;        /* Centraliza na horizontal */
+  align-items: center;            /* Centraliza na vertical */
+}
+
+/* Classe utilitária para esconder elementos da tela */
+#countdown-overlay.hidden {
+  display: none; /* Oculta o elemento quando a classe 'hidden' está ativa */
+}
+
+/* Estilo do número da contagem regressiva */
+#countdown-text {
+  font-size: 5rem;                 /* Texto gigante de 5rem */
+  font-weight: 900;                /* Peso da fonte super pesado */
+  color: #38bdf8;                  /* Cor azul neon */
+  text-shadow: 0 0 20px #38bdf8;   /* Efeito de brilho neon no texto */
+}
+
+/* Grupo de botões inferiores */
+.controls {
+  display: flex; /* Alinha os botões em linha */
+  gap: 10px;     /* Espaço entre os botões */
+}
+
+/* Estilo padrão de todos os botões do sistema */
+button {
+  background: #0284c7;        /* Cor azul primária */
+  color: white;               /* Cor do texto em branco */
+  border: none;               /* Sem bordas metálicas padrão */
+  padding: 10px 18px;         /* Tamanho interno do botão */
+  font-size: 1rem;            /* Tamanho da fonte */
+  font-weight: bold;          /* Fonte em negrito */
+  border-radius: 6px;         /* Cantos levemente arredondados */
+  cursor: pointer;            /* Muda o ponteiro do mouse para o ícone de mão */
+  transition: background 0.2s;/* Suaviza a transição de cor ao passar o mouse */
+}
+
+/* Efeito ao passar o mouse por cima dos botões */
+button:hover {
+  background: #0369a1; /* Escurece o tom de azul ao passar o mouse */
+}
+
+/* Painel de botões virtuais para dispositivos móveis */
+.mobile-controls {
+  display: flex; /* Alinha os botões direcionais lado a lado */
+  gap: 20px;     /* Espaçamento generoso entre a esquerda e a direita */
+}
+
+/* Estilo dos botões direcionais ◀ e ▶ */
+.mobile-controls button {
+  width: 70px;         /* Largura maior para facilitar o toque */
+  height: 50px;        /* Altura adaptada para o polegar */
+  font-size: 1.5rem;   /* Ícones de seta maiores */
+  background: #334155; /* Cor cinza-azulado para destacar dos botões principais */
+}
+
+/* Janela Modal do Ranking */
+.modal {
+  position: fixed;                 /* Fixa a janela por cima de toda a aplicação */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75); /* Escurece o fundo do jogo em 75% */
+  display: flex;                  /* Centraliza a caixa de diálogo */
   justify-content: center;
   align-items: center;
-  border-radius: 8px;
-  pointer-events: none;
+  z-index: 100;                    /* Garante que fique acima de tudo */
 }
 
-.countdown-overlay span {
-  font-size: 4.5rem;
-  font-weight: 900;
-  color: #38bdf8;
-  text-shadow: 0 0 15px rgba(56, 189, 248, 0.8);
-  animation: pulseCount 0.7s ease-in-out infinite;
+/* Oculta a modal quando a classe hidden for aplicada */
+.modal.hidden {
+  display: none;
 }
 
-@keyframes pulseCount {
-  0% { transform: scale(0.6); opacity: 0.3; }
-  50% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.8; }
+/* Caixa de conteúdo branca/escura da Modal */
+.modal-content {
+  background: #1e293b;                     /* Fundo cinza escuro */
+  color: #fff;                             /* Texto em branco */
+  padding: 24px;                           /* Espaçamento interno */
+  border-radius: 12px;                     /* Cantos bem arredondados */
+  width: 90%;                              /* Ocupa até 90% de telas pequenas */
+  max-width: 360px;                        /* Limite máximo de largura */
+  text-align: center;                      /* Centraliza os títulos */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); /* Sombra intensa de sobreposição */
+  border: 1px solid #334155;               /* Borda fina decorativa */
 }
 
-.hidden {
-  display: none !important;
+/* Título dentro da modal */
+.modal-content h2 {
+  margin-top: 0;   /* Remove espaço extra acima */
+  color: #38bdf8;  /* Cor azul neon */
 }
 
-/* Botões */
-.controls {
-  display: flex;
-  gap: 12px;
-  margin-top: 10px;
+/* Lista numerada dos jogadores no ranking */
+#leaderboard-list {
+  text-align: left;    /* Alinha nomes dos jogadores à esquerda */
+  margin: 20px 0;      /* Margem vertical */
+  padding-left: 25px;  /* Recuo para mostrar a numeração 1, 2, 3... */
 }
 
-.btn {
-  padding: 8px 18px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #f8fafc;
-  background-color: #3b82f6;
+/* Item individual da lista de ranking */
+#leaderboard-list li {
+  margin-bottom: 8px; /* Espaço entre cada posição do ranking */
+  font-size: 1.1rem;  /* Tamanho de leitura confortável */
+}
+
+/* Botão de fechar a modal */
+#close-leaderboard-btn {
+  background: #38bdf8; /* Fundo azul claro */
   border: none;
+  padding: 8px 16px;
   border-radius: 6px;
+  color: #0f172a;      /* Texto escuro para contraste altíssimo */
+  font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.btn:hover {
-  background-color: #2563eb;
-  transform: translateY(-1px);
-}
-
-.btn:active {
-  transform: translateY(0);
 }
