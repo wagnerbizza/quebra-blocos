@@ -8,12 +8,21 @@
 </head>
 <body>
 
-  <!-- Overlay da Contagem Regressiva -->
-  <div id="countdown-overlay" class="hidden">
-    <div id="countdown-text">3</div>
+  <!-- Overlay de Início (Botão Play) -->
+  <div id="start-overlay" class="start-overlay">
+    <div class="start-card">
+      <h1>QUEBRA-BLOCOS</h1>
+      <p>Destrua todos os blocos e conquiste o ranking!</p>
+      <button id="start-game-btn" class="btn-play">▶ JOGAR</button>
+    </div>
   </div>
 
   <div class="game-container">
+    <!-- Overlay da Contagem Regressiva -->
+    <div id="countdown-overlay" class="hidden">
+      <div id="countdown-text">3</div>
+    </div>
+
     <!-- Painel de Controle e Status (HUD) -->
     <header class="hud">
       <div class="hud-item">

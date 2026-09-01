@@ -14,6 +14,8 @@ const restartBtn = document.getElementById('restart-btn');
 const rankingBtn = document.getElementById('ranking-btn');
 const countdownOverlay = document.getElementById('countdown-overlay');
 const countdownText = document.getElementById('countdown-text');
+const startOverlay = document.getElementById('start-overlay');
+const startGameBtn = document.getElementById('start-game-btn');
 
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
@@ -133,6 +135,7 @@ let level = 1;
 let lives = 3;
 let isPaused = false;
 let isCountingDown = false;
+let gameStarted = false;
 let animationId = null;
 
 highScoreEl.textContent = highScore;
@@ -161,7 +164,7 @@ const ball = {
   dy: -3.5
 };
 
-// Configurações da Grade de Blocos (Calculado exatamente para 600px sem cortar)
+// Configurações da Grade de Blocos
 const brickRowCount = 5;
 const brickColumnCount = 8;
 const brickWidth = 64;
@@ -300,11 +303,18 @@ if (btnLeft && btnRight) {
 }
 
 pauseBtn.addEventListener('click', () => { initAudio(); togglePause(); });
-restartBtn.addEventListener('click', () => { initAudio(); resetGame(); });
+restartBtn.addEventListener('click', () => { 
+  initAudio(); 
+  if (!gameStarted) {
+    startGame();
+  } else {
+    resetGame();
+  }
+});
 rankingBtn.addEventListener('click', () => { initAudio(); showLeaderboard(); });
 
 function togglePause() {
-  if (isCountingDown) return;
+  if (isCountingDown || !gameStarted) return;
 
   if (isPaused) {
     startCountdown(() => {
@@ -360,6 +370,25 @@ function resetBallAndPaddle() {
 
   ball.dx = ball.speed * Math.sin(randomAngle) * direction;
   ball.dy = -Math.abs(ball.speed * Math.cos(randomAngle));
+}
+
+function startGame() {
+  initAudio();
+  gameStarted = true;
+  if (startOverlay) startOverlay.classList.add('hidden');
+  
+  score = 0;
+  level = 1;
+  lives = 3;
+  powerups = [];
+  particles = [];
+  updateHUD();
+  initBricks();
+  resetBallAndPaddle();
+  
+  startCountdown(() => {
+    loop();
+  });
 }
 
 function resetGame() {
@@ -516,7 +545,9 @@ function moveBall() {
     if (lives <= 0) {
       playSound('hit');
       saveLeaderboardScore(score);
-      resetGame();
+      gameStarted = false;
+      if (startOverlay) startOverlay.classList.remove('hidden');
+      renderStatic();
     } else {
       resetBallAndPaddle();
       if (!isPaused) {
@@ -653,8 +684,15 @@ document.getElementById('close-leaderboard-btn')?.addEventListener('click', () =
   document.getElementById('leaderboard-modal')?.classList.add('hidden');
 });
 
+function renderStatic() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBricks();
+  drawPaddle();
+  drawBall();
+}
+
 function loop() {
-  if (isPaused || isCountingDown) return;
+  if (isPaused || isCountingDown || !gameStarted) return;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -672,8 +710,9 @@ function loop() {
   animationId = requestAnimationFrame(loop);
 }
 
+// Inicialização Estática (Aguardando o clique em Play)
 initBricks();
 updateHUD();
-startCountdown(() => {
-  loop();
-});
+renderStatic();
+
+startGameBtn.addEventListener('click', startGame);
