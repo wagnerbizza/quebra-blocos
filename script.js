@@ -2,11 +2,9 @@
 // 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA COMPLETA COM FIREBASE REALTIME
 // ==============================================================================
 
-// Captura a referência da tela Canvas do HTML
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Captura dos elementos HTML do painel (HUD) e controles
 const scoreEl = document.getElementById('score');
 const highScoreEl = document.getElementById('high-score');
 const levelEl = document.getElementById('level');
@@ -17,14 +15,11 @@ const rankingBtn = document.getElementById('ranking-btn');
 const countdownOverlay = document.getElementById('countdown-overlay');
 const countdownText = document.getElementById('countdown-text');
 
-// Captura dos botões direcionais móveis
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
 
-// Variável para armazenar a instância da Web Audio API
 let audioCtx = null;
 
-// Inicializa ou retoma o contexto de áudio do navegador
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -34,7 +29,6 @@ function initAudio() {
   }
 }
 
-// Sintetizador de efeitos sonoros
 function playSound(type) {
   try {
     initAudio();
@@ -92,12 +86,10 @@ function playSound(type) {
   }
 }
 
-// Desbloqueia áudio na primeira interação do usuário
 window.addEventListener('click', initAudio, { once: true });
 window.addEventListener('touchstart', initAudio, { once: true });
 window.addEventListener('keydown', initAudio, { once: true });
 
-// Array global de partículas para explosões visuais
 let particles = [];
 
 function createExplosion(x, y, color) {
@@ -135,7 +127,6 @@ function updateParticles() {
   }
 }
 
-// Variáveis Globais de Estado
 let score = 0;
 let highScore = localStorage.getItem('breakout_highscore') || 0;
 let level = 1;
@@ -146,7 +137,6 @@ let animationId = null;
 
 highScoreEl.textContent = highScore;
 
-// Propriedades da Raquete
 const paddle = {
   width: 75,
   baseWidth: 75,
@@ -161,7 +151,6 @@ const paddle = {
 
 const keys = { right: false, left: false };
 
-// Propriedades da Bola
 const ball = {
   x: canvas.width / 2,
   y: canvas.height - 40,
@@ -172,14 +161,14 @@ const ball = {
   dy: -3.5
 };
 
-// Configurações da Grade de Blocos
+// Configurações da Grade de Blocos (Calculado exatamente para 600px sem cortar)
 const brickRowCount = 5;
 const brickColumnCount = 8;
-const brickPadding = 8;
-const brickOffsetTop = 40;
-const brickOffsetLeft = 28;
-const brickWidth = 65;
+const brickWidth = 64;
 const brickHeight = 18;
+const brickPadding = 6;
+const brickOffsetTop = 40;
+const brickOffsetLeft = 24;
 
 let bricks = [];
 
@@ -258,7 +247,6 @@ function applyPowerupEffect(type) {
   }
 }
 
-// Eventos de Teclado
 window.addEventListener('keydown', (e) => {
   initAudio();
   if (e.key === 'ArrowRight' || e.key === 'Right' || e.key === 'd' || e.key === 'D') keys.right = true;
@@ -271,7 +259,6 @@ window.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'Left' || e.key === 'a' || e.key === 'A') keys.left = false;
 });
 
-// Movimento com Mouse e Touch
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   const relativeX = e.clientX - rect.left;
@@ -407,7 +394,6 @@ function updateHUD() {
   }
 }
 
-// Funções de Desenho
 function drawPaddle() {
   ctx.beginPath();
   ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 5);
@@ -603,7 +589,7 @@ function collisionDetection() {
   }
 }
 
-// 🏆 INTEGRAÇÃO DO RANKING GLOBAL COM FIREBASE REALTIME DATABASE
+// 🏆 RANKING GLOBAL COM FIREBASE REALTIME
 const MAX_LEADERBOARD_ENTRIES = 5;
 
 function saveLeaderboardScore(newScore) {
@@ -611,7 +597,6 @@ function saveLeaderboardScore(newScore) {
 
   const playerName = prompt(`🎉 Fim de jogo! Você fez ${newScore} pontos.\nDigite seu nome para o Ranking Global:`) || "Jogador Anônimo";
 
-  // Reseta estado dos botões para a raquete não andar sozinha
   keys.left = false;
   keys.right = false;
 
@@ -621,7 +606,6 @@ function saveLeaderboardScore(newScore) {
     timestamp: Date.now()
   };
 
-  // Grava o novo registro na coleção 'leaderboard' do Firebase
   database.ref('leaderboard').push(scoreData)
     .then(() => showLeaderboard())
     .catch((err) => console.error("Erro ao salvar no Firebase:", err));
@@ -636,7 +620,6 @@ function showLeaderboard() {
   listEl.innerHTML = '<li>Carregando ranking global...</li>';
   modal.classList.remove('hidden');
 
-  // Busca em tempo real as 5 maiores pontuações gravadas no Firebase
   database.ref('leaderboard')
     .orderByChild('score')
     .limitToLast(MAX_LEADERBOARD_ENTRIES)
@@ -648,7 +631,6 @@ function showLeaderboard() {
         scores.push(childSnapshot.val());
       });
 
-      // Ordena em ordem decrescente (do maior ponto para o menor)
       scores.reverse();
 
       if (scores.length === 0) {
@@ -660,6 +642,10 @@ function showLeaderboard() {
           listEl.appendChild(li);
         });
       }
+    })
+    .catch((err) => {
+      listEl.innerHTML = '<li>Erro ao carregar o ranking. Verifique as Regras do Firebase.</li>';
+      console.error(err);
     });
 }
 
@@ -667,7 +653,6 @@ document.getElementById('close-leaderboard-btn')?.addEventListener('click', () =
   document.getElementById('leaderboard-modal')?.classList.add('hidden');
 });
 
-// Loop Principal de Renderização
 function loop() {
   if (isPaused || isCountingDown) return;
 
@@ -687,7 +672,6 @@ function loop() {
   animationId = requestAnimationFrame(loop);
 }
 
-// Inicialização
 initBricks();
 updateHUD();
 startCountdown(() => {
