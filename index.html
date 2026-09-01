@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- Configurações básicas de codificação e responsividade para dispositivos móveis -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quebra-Blocos Arcade Pro</title>
+  
+  <!-- Importação do arquivo de estilos externos -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Wrapper principal para centralizar e limitar a largura da interface -->
+  <div class="main-wrapper">
+    
+    <!-- Título Principal do Jogo -->
+    <h1 class="game-title">Quebra-Blocos</h1>
+
+    <!-- 
+      PAINEL HUD (Heads-Up Display): 
+      Exibe informações em tempo real durante a partida.
+      - Recorde: Alinhado à esquerda.
+      - Pontos Atuais: Centralizado com destaque visual.
+      - Fase Atual: Posição intermediária.
+      - Vidas: Alinhado à direita com ícones.
+    -->
+    <div class="hud-container">
+      <div class="hud-card">Recorde: <span id="highScoreText" class="stat-value text-gold">0</span></div>
+      <div class="hud-card score-highlight">Pontos: <span id="scoreText" class="stat-value text-blue">0</span></div>
+      <div class="hud-card">Fase: <span id="levelText" class="stat-value text-purple">1</span></div>
+      <div class="hud-card">Vidas: <span id="livesContainer" class="lives-icons">❤️ ❤️ ❤️</span></div>
+    </div>
+
+    <!-- 
+      ÁREA DO JOGO: 
+      Contém a tela (Canvas) e as mensagens sobrepostas (Overlay).
+    -->
+    <div class="game-container">
+      <!-- Elemento de renderização gráfica 2D (600x400) -->
+      <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+      <!-- Overlay: Menu dinâmico para Início, Pausa, Contagem Regressiva e Game Over -->
+      <div id="overlay" class="overlay">
+        <h2 id="overlayTitle">Pronto para Jogar?</h2>
+        <p id="overlaySub">Clique no botão abaixo para começar.</p>
+        <button id="btnStart" class="btn-start" onclick="startGame()">Iniciar Jogo</button>
+      </div>
+    </div>
+
+    <!-- 
+      PAINEL DE AÇÕES DE CONTROLE:
+      Contém os botões principais de fluxo (Pausar/Retomar e Reiniciar imediatamente).
+    -->
+    <div class="action-controls">
+      <button id="btnPause" class="btn-action" onclick="togglePause()">⏸️ Pausar</button>
+      <button id="btnRestart" class="btn-action btn-danger" onclick="startGame()">🔄 Recomeçar</button>
+    </div>
+
+    <!-- 
+      CONTROLES TOUCH (MOBILE): 
+      Botões virtuais para movimentação da raquete em telas sensíveis ao toque.
+    -->
+    <div class="touch-controls">
+      <button id="btnLeft" class="btn-touch">◀</button>
+      <button id="btnRight" class="btn-touch">▶</button>
+    </div>
+  </div>
+
+  <!-- Vinculação da lógica em JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>

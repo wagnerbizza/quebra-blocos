@@ -1,0 +1,197 @@
+/* ==========================================================================
+   1. CONFIGURAÇÕES GLOBAIS E RESET
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* Evita seleção indesejada de texto ao clicar rapidamente */
+  user-select: none;
+  -webkit-user-select: none;
+  /* Melhora o tempo de resposta do toque em dispositivos móveis */
+  touch-action: manipulation;
+}
+
+body {
+  /* Fundo escuro em gradiente radial para atmosfera arcade */
+  background: radial-gradient(circle at center, #1b1b2f 0%, #0f0f1a 100%);
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 10px;
+}
+
+/* Container flexível que limita o tamanho máximo do jogo */
+.main-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 650px;
+}
+
+.game-title {
+  font-size: 24px;
+  color: #89b4fa;
+  text-shadow: 0 0 10px rgba(137, 180, 250, 0.4);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   2. HUD (PAINEL DE ESTATÍSTICAS)
+   ========================================================================== */
+.hud-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 6px;
+}
+
+/* Cards padrão do HUD */
+.hud-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 4px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Destaque para o Placar Atual no centro */
+.hud-card.score-highlight {
+  background: rgba(0, 242, 254, 0.15);
+  border: 1px solid rgba(0, 242, 254, 0.5);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
+  flex: 1.2; /* Dá um leve ganho de espaço em relação aos outros cards */
+}
+
+.hud-card.score-highlight .stat-value {
+  font-size: 16px;
+  text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+}
+
+/* Classes de cores personalizadas para valores do HUD */
+.stat-value { font-weight: bold; }
+.lives-icons { letter-spacing: 2px; font-size: 12px; }
+.text-blue { color: #00f2fe; }
+.text-gold { color: #f6d365; }
+.text-purple { color: #cba6f7; }
+
+/* ==========================================================================
+   3. ÁREA DE JOGO (CANVAS E OVERLAY)
+   ========================================================================== */
+.game-container {
+  position: relative;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 242, 254, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+}
+
+canvas {
+  background: #080811;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Camada transparente sobre a tela do jogo (Pause, GameOver, Início) */
+.overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(8, 8, 17, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+  padding: 20px;
+  text-align: center;
+}
+
+.overlay h2 { font-size: 32px; margin-bottom: 8px; color: #4facfe; }
+.overlay p { color: #a6adc8; margin-bottom: 18px; font-size: 14px; line-height: 1.4; }
+
+/* Botão padrão do menu sobreposto */
+.btn-start {
+  padding: 10px 26px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(45deg, #00f2fe, #4facfe);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+  transition: transform 0.2s;
+}
+
+.btn-start:hover { transform: scale(1.05); }
+
+/* ==========================================================================
+   4. BOTÕES DE AÇÃO E CONTROLES TOUCH
+   ========================================================================== */
+/* Container para Pausar e Recomeçar */
+.action-controls {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-action {
+  flex: 1;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-action:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Estilo de alerta/perigo para o botão de reiniciar */
+.btn-action.btn-danger { background: rgba(255, 8, 68, 0.2); border-color: rgba(255, 8, 68, 0.4); }
+.btn-action.btn-danger:hover { background: rgba(255, 8, 68, 0.4); }
+
+/* Botões para telas sensíveis ao toque */
+.touch-controls {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 5px;
+}
+
+.btn-touch {
+  width: 70px;
+  height: 50px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 20px;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-touch:active { background: rgba(0, 242, 254, 0.4); }
+
+/* Utility Class para esconder elementos dinamicamente */
+.hidden { display: none !important; }
