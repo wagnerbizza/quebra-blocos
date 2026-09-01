@@ -1,77 +1,89 @@
 <!DOCTYPE html>
-<!-- Define que o documento é HTML5 moderno -->
 <html lang="pt-BR">
 <head>
-  <!-- Define o conjunto de caracteres para aceitar acentos em português -->
-  <meta charset="UTF-8" />
-  <!-- Ajusta a escala da tela para funcionar corretamente em dispositivos móveis (responsivo) -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Título que aparece na aba do navegador -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quebra-Blocos Arcade Pro</title>
-  <!-- Vincula a folha de estilos externa (CSS) a este documento HTML -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Conteiner principal que centraliza e agrupa todos os elementos do jogo -->
+
+  <!-- Overlay da Contagem Regressiva -->
+  <div id="countdown-overlay" class="hidden">
+    <div id="countdown-text">3</div>
+  </div>
+
   <div class="game-container">
-    
-    <!-- Painel superior de informações (HUD - Heads-Up Display) -->
-    <div class="hud">
-      <!-- Exibe os pontos da partida atual -->
-      <div class="hud-item">Pontos: <span id="score">0</span></div>
-      <!-- Exibe a maior pontuação já alcançada -->
-      <div class="hud-item">Recorde: <span id="high-score">0</span></div>
-      <!-- Exibe a fase/nível atual -->
-      <div class="hud-item">Nível: <span id="level">1</span></div>
-      <!-- Exibe a quantidade de vidas restantes via ícones de coração -->
-      <div class="hud-item">Vidas: <span id="lives">❤️❤️❤️</span></div>
-    </div>
-
-    <!-- Envoltório que segura o Canvas e telas sobrepostas -->
-    <div class="canvas-wrapper">
-      <!-- Elemento gráfico onde o jogo é desenhado via JavaScript (largura 600px, altura 400px) -->
-      <canvas id="gameCanvas" width="600" height="400"></canvas>
-      
-      <!-- Overlay de tela preta para a contagem regressiva (3, 2, 1, JÁ!) -->
-      <div id="countdown-overlay" class="hidden">
-        <!-- Texto onde a contagem regressiva é atualizada dinamicamente -->
-        <span id="countdown-text">3</span>
+    <!-- Painel de Controle e Status (HUD) -->
+    <header class="hud">
+      <div class="hud-item">
+        <span class="label">PONTOS</span>
+        <span id="score">0</span>
       </div>
-    </div>
+      <div class="hud-item">
+        <span class="label">RECORDE</span>
+        <span id="high-score">0</span>
+      </div>
+      <div class="hud-item">
+        <span class="label">FASE</span>
+        <span id="level">1</span>
+      </div>
+      <div class="hud-item">
+        <span class="label">VIDAS</span>
+        <span id="lives">❤️❤️❤️</span>
+      </div>
+    </header>
 
-    <!-- Painel com botões de ação e controle do jogo -->
-    <div class="controls">
-      <!-- Botão para pausar ou retomar a partida -->
-      <button id="pause-btn">Pausar</button>
-      <!-- Botão para reiniciar o jogo do zero -->
-      <button id="restart-btn">Reiniciar</button>
-      <!-- Botão para abrir a janela do ranking de pontuações -->
-      <button id="ranking-btn">🏆 Ranking</button>
-    </div>
+    <!-- Canvas do Jogo -->
+    <canvas id="gameCanvas" width="600" height="450"></canvas>
 
-    <!-- Controles virtuais visíveis para telas sensíveis ao toque (Mobile) -->
+    <!-- Barra de Controles da Interface -->
+    <footer class="controls">
+      <button id="pause-btn" class="btn">Pausar</button>
+      <button id="restart-btn" class="btn btn-secondary">Reiniciar</button>
+      <button id="ranking-btn" class="btn btn-warning">🏆 Ranking</button>
+    </footer>
+
+    <!-- Controles Virtuais para Celular/Touch -->
     <div class="mobile-controls">
-      <!-- Botão para mover a raquete para a esquerda -->
-      <button id="btn-left">◀</button>
-      <!-- Botão para mover a raquete para a direita -->
-      <button id="btn-right">▶</button>
+      <button id="btn-left" class="touch-btn">◀</button>
+      <button id="btn-right" class="touch-btn">▶</button>
     </div>
   </div>
 
-  <!-- Janela modal flutuante que exibe o Ranking dos Top 5 jogadores -->
+  <!-- Modal do Ranking do Campeonato (Global Firebase) -->
   <div id="leaderboard-modal" class="modal hidden">
-    <!-- Caixa interna com conteúdo da modal -->
     <div class="modal-content">
-      <!-- Título da janela do ranking -->
-      <h2>🏆 Ranking do Campeonato</h2>
-      <!-- Lista ordenada (1º, 2º, 3º...) que receberá os nomes via JS -->
-      <ol id="leaderboard-list"></ol>
-      <!-- Botão para fechar a janela modal -->
-      <button id="close-leaderboard-btn">Fechar</button>
+      <h2>🏆 Ranking Global (Top 5)</h2>
+      <ol id="leaderboard-list">
+        <li>Carregando ranking global...</li>
+      </ol>
+      <button id="close-leaderboard-btn" class="btn">Fechar</button>
     </div>
   </div>
 
-  <!-- Vincula o script JavaScript com a lógica e física do jogo -->
+  <!-- SDKs do Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <script>
+    // Configurações do seu projeto no Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJsmWldjy6TRSDR4vfRVS-Gijoun0d8Cc",
+      authDomain: "quebra-blocos.firebaseapp.com",
+      databaseURL: "https://quebra-blocos-default-rtdb.firebaseio.com",
+      projectId: "quebra-blocos",
+      storageBucket: "quebra-blocos.appspot.com",
+      messagingSenderId: "961741884553",
+      appId: "1:961741884553:web:b2c130d49c76c96f338a58"
+    };
+
+    // Inicializa o Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+  </script>
+
+  <!-- Script da Lógica Principal do Jogo -->
   <script src="script.js"></script>
 </body>
 </html>

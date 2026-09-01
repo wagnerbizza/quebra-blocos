@@ -1,10 +1,9 @@
 // ==============================================================================
-// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA E FÍSICA COMPLETA (ATUALIZADO)
+// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA COMPLETA COM FIREBASE REALTIME
 // ==============================================================================
 
 // Captura a referência da tela Canvas do HTML
 const canvas = document.getElementById('gameCanvas');
-// Define o contexto de renderização 2D para desenhar retângulos, círculos e textos
 const ctx = canvas.getContext('2d');
 
 // Captura dos elementos HTML do painel (HUD) e controles
@@ -93,15 +92,14 @@ function playSound(type) {
   }
 }
 
-// Desbloqueia áudio no primeiro clique, toque ou tecla do usuário na página
+// Desbloqueia áudio na primeira interação do usuário
 window.addEventListener('click', initAudio, { once: true });
 window.addEventListener('touchstart', initAudio, { once: true });
 window.addEventListener('keydown', initAudio, { once: true });
 
-// Array global que armazena os fragmentos da explosão visual
+// Array global de partículas para explosões visuais
 let particles = [];
 
-// Gera explosões de partículas coloridas na posição (x, y)
 function createExplosion(x, y, color) {
   for (let i = 0; i < 10; i++) {
     particles.push({
@@ -116,7 +114,6 @@ function createExplosion(x, y, color) {
   }
 }
 
-// Desenha e reduz o tempo de vida das partículas na tela
 function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
@@ -138,7 +135,7 @@ function updateParticles() {
   }
 }
 
-// Variáveis Globais de Estado do Jogo
+// Variáveis Globais de Estado
 let score = 0;
 let highScore = localStorage.getItem('breakout_highscore') || 0;
 let level = 1;
@@ -147,10 +144,9 @@ let isPaused = false;
 let isCountingDown = false;
 let animationId = null;
 
-// Exibe o recorde carregado na tela
 highScoreEl.textContent = highScore;
 
-// Objeto de propriedade da Raquete (Paddle)
+// Propriedades da Raquete
 const paddle = {
   width: 75,
   baseWidth: 75,
@@ -163,10 +159,9 @@ const paddle = {
   status: 'normal'
 };
 
-// Monitora o estado de pressionamento das teclas direcionais
 const keys = { right: false, left: false };
 
-// Objeto de propriedade da Bola
+// Propriedades da Bola
 const ball = {
   x: canvas.width / 2,
   y: canvas.height - 40,
@@ -188,7 +183,6 @@ const brickHeight = 18;
 
 let bricks = [];
 
-// Preenche e reinicia a matriz de blocos
 function initBricks() {
   bricks = [];
   const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
@@ -205,10 +199,8 @@ function initBricks() {
   }
 }
 
-// Array de Power-ups ativos caindo na tela
 let powerups = [];
 
-// Sorteia e cria um item de power-up quando um bloco é quebrado
 function spawnPowerup(x, y) {
   const dropChance = Math.min(0.35, 0.25 + level * 0.02);
   
@@ -236,14 +228,12 @@ function spawnPowerup(x, y) {
   }
 }
 
-// Atualiza os vetores de velocidade (dx, dy) mantendo o ângulo da bola
 function updateBallVelocity() {
   const currentAngle = Math.atan2(ball.dy, ball.dx);
   ball.dx = ball.speed * Math.cos(currentAngle);
   ball.dy = ball.speed * Math.sin(currentAngle);
 }
 
-// Aplica as regras de efeito ao pegar cada cápsula/item
 function applyPowerupEffect(type) {
   if (type === 'green') {
     paddle.width = paddle.largeWidth;
@@ -268,7 +258,7 @@ function applyPowerupEffect(type) {
   }
 }
 
-// Eventos de teclado (pressionar teclas)
+// Eventos de Teclado
 window.addEventListener('keydown', (e) => {
   initAudio();
   if (e.key === 'ArrowRight' || e.key === 'Right' || e.key === 'd' || e.key === 'D') keys.right = true;
@@ -276,13 +266,12 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'p' || e.key === 'P') togglePause();
 });
 
-// Eventos de teclado (soltar teclas)
 window.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowRight' || e.key === 'Right' || e.key === 'd' || e.key === 'D') keys.right = false;
   if (e.key === 'ArrowLeft' || e.key === 'Left' || e.key === 'a' || e.key === 'A') keys.left = false;
 });
 
-// Movimento da raquete pelo rastro do mouse
+// Movimento com Mouse e Touch
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   const relativeX = e.clientX - rect.left;
@@ -293,7 +282,6 @@ canvas.addEventListener('mousemove', (e) => {
   }
 });
 
-// Suporte para arraste direto com o dedo na tela de celulares
 function handleTouch(e) {
   initAudio();
   if (e.touches.length > 0) {
@@ -308,7 +296,6 @@ function handleTouch(e) {
 canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleTouch(e); }, { passive: false });
 canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleTouch(e); }, { passive: false });
 
-// Configuração dos botões na tela móvel (◀ e ▶)
 if (btnLeft && btnRight) {
   btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); initAudio(); keys.left = true; }, { passive: false });
   btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); keys.left = false; }, { passive: false });
@@ -325,12 +312,10 @@ if (btnLeft && btnRight) {
   btnRight.addEventListener('mouseleave', () => { keys.right = false; });
 }
 
-// Vincula cliques dos botões da interface
 pauseBtn.addEventListener('click', () => { initAudio(); togglePause(); });
 restartBtn.addEventListener('click', () => { initAudio(); resetGame(); });
 rankingBtn.addEventListener('click', () => { initAudio(); showLeaderboard(); });
 
-// Alterna o estado de Pausa do jogo
 function togglePause() {
   if (isCountingDown) return;
 
@@ -347,7 +332,6 @@ function togglePause() {
   }
 }
 
-// Executa a contagem regressiva 3, 2, 1, JÁ!
 function startCountdown(onComplete) {
   isCountingDown = true;
   countdownOverlay.classList.remove('hidden');
@@ -372,13 +356,11 @@ function startCountdown(onComplete) {
   }, 600);
 }
 
-// 🛠️ FIX 2: Reposiciona bola e raquete com sorteio angular aleatório para a bola
 function resetBallAndPaddle() {
   paddle.width = paddle.baseWidth;
   paddle.status = 'normal';
   paddle.x = (canvas.width - paddle.width) / 2;
   
-  // Limpa estado residual das teclas direcionais
   keys.left = false;
   keys.right = false;
 
@@ -386,7 +368,6 @@ function resetBallAndPaddle() {
   ball.x = canvas.width / 2;
   ball.y = canvas.height - 40;
   
-  // Gera variação angular aleatória real na saída da bola
   const randomAngle = (Math.random() * (Math.PI / 2.5)) - (Math.PI / 5);
   const direction = Math.random() > 0.5 ? 1 : -1;
 
@@ -394,7 +375,6 @@ function resetBallAndPaddle() {
   ball.dy = -Math.abs(ball.speed * Math.cos(randomAngle));
 }
 
-// Reinicia o jogo por completo ao perder ou clicar em reiniciar
 function resetGame() {
   score = 0;
   level = 1;
@@ -416,7 +396,6 @@ function resetGame() {
   });
 }
 
-// Atualiza o painel HUD na tela
 function updateHUD() {
   scoreEl.textContent = score;
   levelEl.textContent = level;
@@ -428,7 +407,7 @@ function updateHUD() {
   }
 }
 
-// Funções de Desenho no Canvas
+// Funções de Desenho
 function drawPaddle() {
   ctx.beginPath();
   ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 5);
@@ -499,7 +478,6 @@ function drawPowerups() {
   });
 }
 
-// Lógica de Física e Colisões
 function movePaddle() {
   if (keys.right) paddle.x += paddle.speed;
   if (keys.left) paddle.x -= paddle.speed;
@@ -546,7 +524,6 @@ function moveBall() {
     playSound('hit');
   }
 
-  // Perder Vida
   if (ball.y + ball.radius > canvas.height) {
     lives--;
     updateHUD();
@@ -626,59 +603,71 @@ function collisionDetection() {
   }
 }
 
-// 🏆 LÓGICA DO RANKING DO CAMPEONATO
+// 🏆 INTEGRAÇÃO DO RANKING GLOBAL COM FIREBASE REALTIME DATABASE
 const MAX_LEADERBOARD_ENTRIES = 5;
 
-function getLeaderboard() {
-  return JSON.parse(localStorage.getItem('breakout_leaderboard')) || [];
-}
-
-// 🛠️ FIX 1: Limpa as teclas para a raquete não ir para o canto sozinha após o prompt
 function saveLeaderboardScore(newScore) {
   if (newScore <= 0) return;
 
-  let leaderboard = getLeaderboard();
-  
-  const playerName = prompt(`🎉 Fim de jogo! Você fez ${newScore} pontos.\nDigite seu nome para o Ranking:`) || "Jogador Anônimo";
+  const playerName = prompt(`🎉 Fim de jogo! Você fez ${newScore} pontos.\nDigite seu nome para o Ranking Global:`) || "Jogador Anônimo";
 
-  // Reseta estado das teclas
+  // Reseta estado dos botões para a raquete não andar sozinha
   keys.left = false;
   keys.right = false;
 
-  leaderboard.push({ name: playerName.trim().substring(0, 12), score: newScore });
-  leaderboard.sort((a, b) => b.score - a.score);
-  leaderboard = leaderboard.slice(0, MAX_LEADERBOARD_ENTRIES);
-  
-  localStorage.setItem('breakout_leaderboard', JSON.stringify(leaderboard));
-  showLeaderboard();
+  const scoreData = {
+    name: playerName.trim().substring(0, 12),
+    score: newScore,
+    timestamp: Date.now()
+  };
+
+  // Grava o novo registro na coleção 'leaderboard' do Firebase
+  database.ref('leaderboard').push(scoreData)
+    .then(() => showLeaderboard())
+    .catch((err) => console.error("Erro ao salvar no Firebase:", err));
 }
 
 function showLeaderboard() {
-  const leaderboard = getLeaderboard();
   const listEl = document.getElementById('leaderboard-list');
   const modal = document.getElementById('leaderboard-modal');
 
   if (!listEl || !modal) return;
 
-  listEl.innerHTML = '';
-  if (leaderboard.length === 0) {
-    listEl.innerHTML = '<li>Nenhuma pontuação salva ainda.</li>';
-  } else {
-    leaderboard.forEach((entry) => {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${entry.name}</strong>: ${entry.score} pts`;
-      listEl.appendChild(li);
-    });
-  }
-
+  listEl.innerHTML = '<li>Carregando ranking global...</li>';
   modal.classList.remove('hidden');
+
+  // Busca em tempo real as 5 maiores pontuações gravadas no Firebase
+  database.ref('leaderboard')
+    .orderByChild('score')
+    .limitToLast(MAX_LEADERBOARD_ENTRIES)
+    .once('value', (snapshot) => {
+      listEl.innerHTML = '';
+      const scores = [];
+
+      snapshot.forEach((childSnapshot) => {
+        scores.push(childSnapshot.val());
+      });
+
+      // Ordena em ordem decrescente (do maior ponto para o menor)
+      scores.reverse();
+
+      if (scores.length === 0) {
+        listEl.innerHTML = '<li>Nenhuma pontuação salva ainda.</li>';
+      } else {
+        scores.forEach((entry) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${entry.name}</strong>: ${entry.score} pts`;
+          listEl.appendChild(li);
+        });
+      }
+    });
 }
 
 document.getElementById('close-leaderboard-btn')?.addEventListener('click', () => {
   document.getElementById('leaderboard-modal')?.classList.add('hidden');
 });
 
-// Loop Principal
+// Loop Principal de Renderização
 function loop() {
   if (isPaused || isCountingDown) return;
 
