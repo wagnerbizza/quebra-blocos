@@ -1,5 +1,5 @@
 // ==============================================================================
-// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA COMPLETA COM FIREBASE REALTIME
+// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA COMPLETA + OBSTÁCULOS MÓVEIS (FASE 3+)
 // ==============================================================================
 
 const canvas = document.getElementById('gameCanvas');
@@ -175,6 +175,11 @@ const brickOffsetLeft = 24;
 
 let bricks = [];
 
+// ==============================================================================
+// 🚀 ADIÇÃO: OBSTÁCULOS MÓVEIS (Fase 3+)
+// ==============================================================================
+let movingObstacles = [];
+
 function initBricks() {
   bricks = [];
   const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
@@ -311,15 +316,12 @@ restartBtn.addEventListener('click', () => {
     resetGame();
   }
 });
-rankingBtn.addEventListener('click', () => { initAudio(); showLeaderboard(); });
 
 rankingBtn.addEventListener('click', () => {
-  // Se o jogo estiver rodando e não pausado, pausa automaticamente
   if (gameStarted && !isPaused && !isCountingDown) {
-    togglePause(); // Pausa o jogo
+    togglePause();
   }
-  allowFirebaseSync = false; // Evita sincronizações indesejadas em segundo plano
-  showLeaderboard(); // Abre o modal do ranking
+  showLeaderboard();
 });
 
 function togglePause() {
@@ -379,6 +381,9 @@ function resetBallAndPaddle() {
 
   ball.dx = ball.speed * Math.sin(randomAngle) * direction;
   ball.dy = -Math.abs(ball.speed * Math.cos(randomAngle));
+
+  // Limpa os obstáculos móveis ao resetar a vida/bola
+  movingObstacles = [];
 }
 
 function startGame() {
@@ -391,6 +396,7 @@ function startGame() {
   lives = 3;
   powerups = [];
   particles = [];
+  movingObstacles = [];
   updateHUD();
   initBricks();
   resetBallAndPaddle();
@@ -406,6 +412,7 @@ function resetGame() {
   lives = 3;
   powerups = [];
   particles = [];
+  movingObstacles = [];
   updateHUD();
   initBricks();
   resetBallAndPaddle();
@@ -591,6 +598,77 @@ function movePowerups() {
   }
 }
 
+// ==============================================================================
+// 🚀 LÓGICA DOS OBSTÁCULOS MÓVEIS (A partir da Fase 3)
+// ==============================================================================
+function updateAndDrawMovingObstacles() {
+  if (level >= 3) {
+    // Cria novos obstáculos aleatoriamente
+    if (Math.random() < 0.015 && movingObstacles.length < 2) {
+      movingObstacles.push({
+        x: Math.random() > 0.5 ? 0 : canvas.width - 45,
+        y: Math.random() * 100 + 80,
+        width: 45,
+        height: 14,
+        dx: (Math.random() > 0.5 ? 2 : -2) * (1 + level * 0.1)
+      });
+    }
+
+    ctx.fillStyle = '#ef4444';
+    for (let i = movingObstacles.length - 1; i >= 0; i--) {
+      let mo = movingObstacles[i];
+      mo.x += mo.dx;
+
+      if (mo.x <= 0 || mo.x + mo.width >= canvas.width) {
+        mo.dx *= -1;
+      }
+
+      ctx.beginPath();
+      ctx.roundRect(mo.x, mo.y, mo.width, mo.height, 4);
+      ctx.fill();
+      ctx.closePath();
+
+      // Colisão da bola com o obstáculo móvel
+      if (
+        ball.x > mo.x &&
+        ball.x < mo.x + mo.width &&
+        ball.y > mo.y &&
+        ball.y < mo.y + mo.height
+      ) {
+        ball.dy = -ball.dy;
+        playSound('hit');
+      }
+
+      // Colisão da raquete com o obstáculo móvel (perde vida)
+      if (
+        paddle.x < mo.x + mo.width &&
+        paddle.x + paddle.width > mo.x &&
+        paddle.y < mo.y + mo.height &&
+        paddle.y + paddle.height > mo.y
+      ) {
+        movingObstacles.splice(i, 1);
+        lives--;
+        updateHUD();
+        playSound('hit');
+        if (lives <= 0) {
+          saveLeaderboardScore(score);
+          gameStarted = false;
+          if (startOverlay) startOverlay.classList.remove('hidden');
+          renderStatic();
+          return;
+        } else {
+          resetBallAndPaddle();
+          cancelAnimationFrame(animationId);
+          startCountdown(() => {
+            loop();
+          });
+          return;
+        }
+      }
+    }
+  }
+}
+
 function collisionDetection() {
   let activeBricks = 0;
   for (let c = 0; c < brickColumnCount; c++) {
@@ -714,6 +792,7 @@ function loop() {
   movePaddle();
   moveBall();
   movePowerups();
+  updateAndDrawMovingObstacles();
   collisionDetection();
 
   animationId = requestAnimationFrame(loop);
