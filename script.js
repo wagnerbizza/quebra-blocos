@@ -313,6 +313,15 @@ restartBtn.addEventListener('click', () => {
 });
 rankingBtn.addEventListener('click', () => { initAudio(); showLeaderboard(); });
 
+rankingBtn.addEventListener('click', () => {
+  // Se o jogo estiver rodando e não pausado, pausa automaticamente
+  if (gameStarted && !isPaused && !isCountingDown) {
+    togglePause(); // Pausa o jogo
+  }
+  allowFirebaseSync = false; // Evita sincronizações indesejadas em segundo plano
+  showLeaderboard(); // Abre o modal do ranking
+});
+
 function togglePause() {
   if (isCountingDown || !gameStarted) return;
 

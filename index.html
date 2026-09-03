@@ -46,17 +46,43 @@
     <!-- Canvas do Jogo -->
     <canvas id="gameCanvas" width="600" height="450"></canvas>
 
-    <!-- Barra de Controles da Interface -->
+    <!-- Barra de Controles da Interface (Com o botão de Configurações adicionado) -->
     <footer class="controls">
       <button id="pause-btn" class="btn">Pausar</button>
       <button id="restart-btn" class="btn btn-secondary">Reiniciar</button>
       <button id="ranking-btn" class="btn btn-warning">🏆 Ranking</button>
+      <button id="settings-btn" class="btn">⚙️ Configurações</button>
     </footer>
 
     <!-- Controles Virtuais para Celular/Touch -->
     <div class="mobile-controls">
       <button id="btn-left" class="touch-btn">◀</button>
       <button id="btn-right" class="touch-btn">▶</button>
+    </div>
+  </div>
+
+  <!-- Modal de Configurações -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Configurações</h2>
+      
+      <div class="setting-group" style="margin: 15px 0;">
+        <label for="initial-speed-select">Velocidade da Bola:</label>
+        <select id="initial-speed-select" style="padding: 5px; width: 100%; margin-top: 5px;">
+          <option value="3">Lento (Iniciante)</option>
+          <option value="4" selected>Normal (Padrão)</option>
+          <option value="5">Rápido (Avançado)</option>
+          <option value="6.5">Insano (Expert)</option>
+        </select>
+      </div>
+
+      <div class="setting-group checkbox-group" style="text-align: left; margin: 15px 0;">
+        <label style="display:block; margin: 5px 0;"><input type="checkbox" id="sound-move" checked> Som de Raquete</label>
+        <label style="display:block; margin: 5px 0;"><input type="checkbox" id="sound-eat" checked> Som de Bloco</label>
+        <label style="display:block; margin: 5px 0;"><input type="checkbox" id="sound-hit" checked> Som de Vida/Morte</label>
+      </div>
+
+      <button id="close-settings-btn" class="btn">Salvar e Fechar</button>
     </div>
   </div>
 
@@ -71,23 +97,20 @@
     </div>
   </div>
 
+  <!-- Elementos de Áudio HTML5 Nativo -->
+  <audio id="sound-move-file" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
+  <audio id="sound-eat-file" src="https://assets.mixkit.co/active_storage/sfx/2704/2704-preview.mp3" preload="auto"></audio>
+  <audio id="sound-hit-file" src="https://assets.mixkit.co/active_storage/sfx/2658/2658-preview.mp3" preload="auto"></audio>
+
   <!-- SDKs do Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <script>
-    // Configurações do seu projeto no Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyBJsmWldjy6TRSDR4vfRVS-Gijoun0d8Cc",
-      authDomain: "quebra-blocos.firebaseapp.com",
-      databaseURL: "https://quebra-blocos-default-rtdb.firebaseio.com",
-      projectId: "quebra-blocos",
-      storageBucket: "quebra-blocos.appspot.com",
-      messagingSenderId: "961741884553",
-      appId: "1:961741884553:web:b2c130d49c76c96f338a58"
+      databaseURL: "https://quebra-blocos-default-rtdb.firebaseio.com/"
     };
 
-    // Inicializa o Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
   </script>
