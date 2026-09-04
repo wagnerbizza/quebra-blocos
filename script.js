@@ -1,5 +1,5 @@
 // ==============================================================================
-// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA COMPLETA + OBSTÁCULOS MÓVEIS (FASE 3+)
+// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA COMPLETA + OBSTÁCULOS MÓVEIS CORRIGIDOS
 // ==============================================================================
 
 const canvas = document.getElementById('gameCanvas');
@@ -164,7 +164,6 @@ const ball = {
   dy: -3.5
 };
 
-// Configurações da Grade de Blocos
 const brickRowCount = 5;
 const brickColumnCount = 8;
 const brickWidth = 64;
@@ -174,10 +173,6 @@ const brickOffsetTop = 40;
 const brickOffsetLeft = 24;
 
 let bricks = [];
-
-// ==============================================================================
-// 🚀 ADIÇÃO: OBSTÁCULOS MÓVEIS (Fase 3+)
-// ==============================================================================
 let movingObstacles = [];
 
 function initBricks() {
@@ -382,7 +377,6 @@ function resetBallAndPaddle() {
   ball.dx = ball.speed * Math.sin(randomAngle) * direction;
   ball.dy = -Math.abs(ball.speed * Math.cos(randomAngle));
 
-  // Limpa os obstáculos móveis ao resetar a vida/bola
   movingObstacles = [];
 }
 
@@ -397,8 +391,9 @@ function startGame() {
   powerups = [];
   particles = [];
   movingObstacles = [];
-  updateHUD();
+  
   initBricks();
+  updateHUD();
   resetBallAndPaddle();
   
   startCountdown(() => {
@@ -413,8 +408,9 @@ function resetGame() {
   powerups = [];
   particles = [];
   movingObstacles = [];
-  updateHUD();
+  
   initBricks();
+  updateHUD();
   resetBallAndPaddle();
   
   if (isPaused) {
@@ -599,18 +595,19 @@ function movePowerups() {
 }
 
 // ==============================================================================
-// 🚀 LÓGICA DOS OBSTÁCULOS MÓVEIS (A partir da Fase 3)
+// 🚀 OBSTÁCULOS MÓVEIS (Fase 3+) COM MOVIMENTO FLUIDO E CONTROLADO
 // ==============================================================================
 function updateAndDrawMovingObstacles() {
   if (level >= 3) {
-    // Cria novos obstáculos aleatoriamente
-    if (Math.random() < 0.015 && movingObstacles.length < 2) {
+    // Cria novos obstáculos controladamente de tempos em tempos
+    if (Math.random() < 0.008 && movingObstacles.length < 2) {
+      const startX = Math.random() > 0.5 ? 0 : canvas.width - 50;
       movingObstacles.push({
-        x: Math.random() > 0.5 ? 0 : canvas.width - 45,
-        y: Math.random() * 100 + 80,
-        width: 45,
+        x: startX,
+        y: Math.random() * 80 + 90,
+        width: 50,
         height: 14,
-        dx: (Math.random() > 0.5 ? 2 : -2) * (1 + level * 0.1)
+        dx: (startX === 0 ? 1 : -1) * (2 + level * 0.15)
       });
     }
 
@@ -619,14 +616,12 @@ function updateAndDrawMovingObstacles() {
       let mo = movingObstacles[i];
       mo.x += mo.dx;
 
+      // Inverte a direção ao bater nas bordas laterais
       if (mo.x <= 0 || mo.x + mo.width >= canvas.width) {
         mo.dx *= -1;
       }
 
-      ctx.beginPath();
-      ctx.roundRect(mo.x, mo.y, mo.width, mo.height, 4);
-      ctx.fill();
-      ctx.closePath();
+      ctx.fillRect(mo.x, mo.y, mo.width, mo.height);
 
       // Colisão da bola com o obstáculo móvel
       if (
@@ -707,7 +702,6 @@ function collisionDetection() {
   }
 }
 
-// 🏆 RANKING GLOBAL COM FIREBASE REALTIME
 const MAX_LEADERBOARD_ENTRIES = 5;
 
 function saveLeaderboardScore(newScore) {
@@ -798,7 +792,6 @@ function loop() {
   animationId = requestAnimationFrame(loop);
 }
 
-// Inicialização Estática (Aguardando o clique em Play)
 initBricks();
 updateHUD();
 renderStatic();
