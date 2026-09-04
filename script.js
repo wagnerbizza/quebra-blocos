@@ -697,73 +697,81 @@ function collisionDetection() {
   }
 }
 
-// PASSO 8: Integração Limpa com o Firebase (Sem Cascatas, Usando o Nome como Chave Direta)
+// PASSO 8: Integração Limpa com o Firebase (Apenas Nome e Pontuação Direta na Raiz)
 const MAX_LEADERBOARD_ENTRIES = 10;
 
+// Função para salvar a pontuação do jogador diretamente no nó raiz do Firebase
 function saveLeaderboardScore(newScore) {
+  // Ignora o salvamento caso a pontuação seja menor ou igual a zero
   if (newScore <= 0) return;
 
-  const playerName = prompt(`🎉 Fim de jogo! Você fez ${newScore} pontos.\nDigite seu nome para o Ranking Global:`) || "Jogador Anônimo";
+  // Abre uma janela para o usuário digitar o nome, definindo um padrão caso cancele
+  const playerName = prompt(`🎉 Fim de jogo! Você fez ${newScore} pontos.\nDigite seu nome para o Ranking:`) || "Jogador Anônimo";
 
+  // Reseta os estados das teclas para evitar que a raquete continue se movimentando sozinha
   keys.left = false;
   keys.right = false;
 
+  // Remove espaços extras e limita o nome digitado a no máximo 12 caracteres
   const cleanName = playerName.trim().substring(0, 12);
 
-  const scoreData = {
-    score: newScore,
-    timestamp: Date.now()
-  };
-
-  // Grava diretamente usando o nome do jogador como nó (ex: leaderboard/Bizza)
-  database.ref(cleanName).set(scoreData)
+  // Envia diretamente para a raiz do banco usando apenas o nome limpo e salvando somente o número da pontuação
+  database.ref(cleanName).set(newScore)
     .then(() => {
+      // Exibe o ranking automaticamente logo após salvar com sucesso
       showLeaderboard();
     })
-    .catch((err) => console.error("Erro ao salvar no Firebase:", err));
+    .catch((err) => console.error("Erro ao salvar no Firebase:", err)); // Registra no console se houver erro
 }
 
+// Função para carregar e exibir o ranking global na tela
 function showLeaderboard() {
   const listEl = document.getElementById('leaderboard-list');
   const modal = document.getElementById('leaderboard-modal');
 
+  // Verifica se os elementos do modal de ranking existem na página HTML
   if (!listEl || !modal) return;
 
-  listEl.innerHTML = '<li>Carregando ranking global...</li>';
-  modal.classList.remove('hidden');
+  // Mostra uma mensagem de carregamento inicial na tela
+  listEl.innerHTML = '<li>Carregando ranking...</li>';
+  modal.classList.remove('hidden'); // Torna o modal visível para o usuário
 
-  database.ref('leaderboard')
-    .orderByChild('score')
-    .limitToLast(MAX_LEADERBOARD_ENTRIES)
-    .once('value', (snapshot) => {
-      listEl.innerHTML = '';
-      const scores = [];
+  // Faz a leitura de todos os dados salvos diretamente na raiz do banco de dados do Firebase
+  database.ref().once('value', (snapshot) => {
+    listEl.innerHTML = ''; // Limpa a lista de carregamento
+    const scores = [];
 
-      snapshot.forEach((childSnapshot) => {
-        // Como agora a chave é o nome, o childSnapshot.key é o nome, e val() contém score e timestamp
-        scores.push({
-          name: childSnapshot.key,
-          score: childSnapshot.val().score
-        });
+    // Percorre cada propriedade encontrada na raiz do banco
+    snapshot.forEach((childSnapshot) => {
+      // childSnapshot.key é o nome do jogador e childSnapshot.val() é o valor numérico direto da pontuação
+      scores.push({
+        name: childSnapshot.key,
+        score: childSnapshot.val()
       });
-
-      // Ordena decrescentemente (maior pontuação no topo)
-      scores.sort((a, b) => b.score - a.score);
-
-      if (scores.length === 0) {
-        listEl.innerHTML = '<li>Nenhuma pontuação salva ainda.</li>';
-      } else {
-        scores.forEach((entry, index) => {
-          const li = document.createElement('li');
-          li.innerHTML = `<strong>#${index + 1} ${entry.name}</strong>: ${entry.score} pts`;
-          listEl.appendChild(li);
-        });
-      }
-    })
-    .catch((err) => {
-      listEl.innerHTML = '<li>Erro ao carregar o ranking. Verifique as Regras do Firebase.</li>';
-      console.error(err);
     });
+
+    // Ordena os jogadores em ordem decrescente (da maior pontuação para a menor)
+    scores.sort((a, b) => b.score - a.score);
+
+    // Seleciona apenas os melhores colocados com base no limite máximo estabelecido
+    const topScores = scores.slice(0, MAX_LEADERBOARD_ENTRIES);
+
+    // Verifica se a lista está vazia e exibe aviso, caso contrário monta os itens na tela
+    if (topScores.length === 0) {
+      listEl.innerHTML = '<li>Nenhuma pontuação salva ainda.</li>';
+    } else {
+      topScores.forEach((entry, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>#${index + 1} ${entry.name}</strong>: ${entry.score} pts`;
+        listEl.appendChild(li); // Insere o item formatado na lista HTML
+      });
+    }
+  })
+  .catch((err) => {
+    // Exibe mensagem de erro amigável se houver falha de conexão ou permissão
+    listEl.innerHTML = '<li>Erro ao carregar o ranking.</li>';
+    console.error(err);
+  });
 }
 
 // PASSO 9: Loop Principal do Jogo e Inicialização
