@@ -1,5 +1,5 @@
 // ==============================================================================
-// 🎮 QUEBRA-BLOCOS ARCADE PRO - LÓGICA COMPLETA + OBSTÁCULOS MÓVEIS CORRIGIDOS
+// 🎮 QUEBRA-BLOCOS ARCADE PRO - PROGRESSÃO DE DIFICULDADE DINÂMICA POR FASE
 // ==============================================================================
 
 const canvas = document.getElementById('gameCanvas');
@@ -68,6 +68,14 @@ function playSound(type) {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
       osc.start(now);
       osc.stop(now + 0.18);
+    } else if (type === 'hazard') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.2);
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.2);
     } else if (type === 'count') {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(520, now);
@@ -174,6 +182,9 @@ const brickOffsetLeft = 24;
 
 let bricks = [];
 let movingObstacles = [];
+let verticalObstacles = [];
+let hazardMines = [];
+let enemyProjectiles = [];
 
 function initBricks() {
   bricks = [];
@@ -194,17 +205,21 @@ function initBricks() {
 let powerups = [];
 
 function spawnPowerup(x, y) {
-  const dropChance = Math.min(0.35, 0.25 + level * 0.02);
+  // A cada nível superior, a chance de power-up diminui um pouco, tornando o jogo mais punitivo
+  const dropChance = Math.max(0.15, 0.32 - level * 0.02);
   
   if (Math.random() < dropChance) {
     const rand = Math.random();
     let type = 'green';
 
-    if (rand < 0.25) {
+    // Nas fases mais altas, aumentamos a chance de vir power-up vermelho (encolher raquete) ou amarelo (acelerar bola)
+    const redChance = Math.min(0.40, 0.20 + level * 0.03);
+
+    if (rand < redChance) {
       type = 'red';
-    } else if (rand < 0.70) {
+    } else if (rand < 0.75) {
       type = 'yellow';
-    } else if (rand < 0.85) {
+    } else if (rand < 0.90) {
       type = 'blue';
     } else {
       type = 'green';
@@ -214,7 +229,7 @@ function spawnPowerup(x, y) {
       x: x,
       y: y,
       radius: 6,
-      dy: 2,
+      dy: 2.2,
       type: type
     });
   }
@@ -240,7 +255,7 @@ function applyPowerupEffect(type) {
     updateBallVelocity();
     playSound('powerup_blue');
   } else if (type === 'yellow') {
-    ball.speed = Math.min(9.5, ball.speed + 1.5);
+    ball.speed = Math.min(11.0, ball.speed + 1.8);
     updateBallVelocity();
     playSound('powerup_yellow');
   }
@@ -367,7 +382,8 @@ function resetBallAndPaddle() {
   keys.left = false;
   keys.right = false;
 
-  ball.speed = ball.baseSpeed + (level - 1) * 0.5;
+  // Escala progressiva de velocidade da bola por nível (cada nível fica perceptivelmente mais rápido)
+  ball.speed = ball.baseSpeed + (level - 1) * 0.75;
   ball.x = canvas.width / 2;
   ball.y = canvas.height - 40;
   
@@ -378,6 +394,23 @@ function resetBallAndPaddle() {
   ball.dy = -Math.abs(ball.speed * Math.cos(randomAngle));
 
   movingObstacles = [];
+  verticalObstacles = [];
+  hazardMines = [];
+  enemyProjectiles = [];
+  initHazards();
+}
+
+function initHazards() {
+  // A quantidade de minas estáticas aumenta progressivamente com o nível (máximo de 7 minas)
+  const mineCount = Math.min(7, 1 + Math.floor(level * 1.2));
+  for (let i = 0; i < mineCount; i++) {
+    hazardMines.push({
+      x: 50 + Math.random() * (canvas.width - 100),
+      y: 130 + Math.random() * 140,
+      radius: 8,
+      active: true
+    });
+  }
 }
 
 function startGame() {
@@ -391,6 +424,9 @@ function startGame() {
   powerups = [];
   particles = [];
   movingObstacles = [];
+  verticalObstacles = [];
+  hazardMines = [];
+  enemyProjectiles = [];
   
   initBricks();
   updateHUD();
@@ -408,6 +444,9 @@ function resetGame() {
   powerups = [];
   particles = [];
   movingObstacles = [];
+  verticalObstacles = [];
+  hazardMines = [];
+  enemyProjectiles = [];
   
   initBricks();
   updateHUD();
@@ -455,9 +494,9 @@ function drawBall() {
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
   
-  if (ball.speed > 6.0) {
+  if (ball.speed > 7.0) {
     ctx.fillStyle = '#f97316';
-  } else if (ball.speed < 4.0) {
+  } else if (ball.speed < 4.5) {
     ctx.fillStyle = '#38bdf8';
   } else {
     ctx.fillStyle = '#f8fafc';
@@ -502,6 +541,31 @@ function drawPowerups() {
     ctx.shadowColor = color;
     ctx.closePath();
     ctx.shadowBlur = 0;
+  });
+}
+
+function drawHazards() {
+  // Minas Estáticas
+  hazardMines.forEach((m) => {
+    if (m.active) {
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#dc2626';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#ef4444';
+      ctx.fill();
+      ctx.closePath();
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // Projéteis Inimigos
+  ctx.fillStyle = '#fbbf24';
+  enemyProjectiles.forEach((proj) => {
+    ctx.beginPath();
+    ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.closePath();
   });
 }
 
@@ -595,72 +659,186 @@ function movePowerups() {
 }
 
 // ==============================================================================
-// 🚀 OBSTÁCULOS MÓVEIS (Fase 3+) COM MOVIMENTO FLUIDO E CONTROLADO
+// 🚀 OBSTÁCULOS COM PROGRESSÃO ESCALONADA POR FASE
 // ==============================================================================
 function updateAndDrawMovingObstacles() {
-  if (level >= 3) {
-    // Cria novos obstáculos controladamente de tempos em tempos
-    if (Math.random() < 0.008 && movingObstacles.length < 2) {
-      const startX = Math.random() > 0.5 ? 0 : canvas.width - 50;
-      movingObstacles.push({
-        x: startX,
-        y: Math.random() * 80 + 90,
-        width: 50,
-        height: 14,
-        dx: (startX === 0 ? 1 : -1) * (2 + level * 0.15)
+  // A quantidade máxima e a velocidade dos obstáculos aumentam conforme o nível sobe
+  const maxHorizObstacles = Math.min(4, 1 + Math.floor(level * 0.7));
+  const spawnChanceHoriz = 0.004 + level * 0.0025;
+
+  if (Math.random() < spawnChanceHoriz && movingObstacles.length < maxHorizObstacles) {
+    const startX = Math.random() > 0.5 ? 0 : canvas.width - 50;
+    // Velocidade aumenta progressivamente por nível
+    const horizSpeed = (2.0 + level * 0.35);
+    movingObstacles.push({
+      x: startX,
+      y: 90 + Math.random() * 90,
+      width: Math.max(35, 50 - level * 2), // Obstáculos ficam ligeiramente menores e mais difíceis nas fases altas
+      height: 14,
+      dx: (startX === 0 ? 1 : -1) * horizSpeed,
+      shootTimer: 0
+    });
+  }
+
+  // Obstáculos verticais escalonados (aparecem já na fase 2+, aumentando quantidade e velocidade)
+  const maxVertObstacles = Math.min(3, Math.floor(level * 0.6));
+  if (level >= 2 && Math.random() < (0.005 + level * 0.0015) && verticalObstacles.length < maxVertObstacles) {
+    const isLeft = Math.random() > 0.5;
+    const vertSpeed = (1.6 + level * 0.25);
+    verticalObstacles.push({
+      x: isLeft ? 15 : canvas.width - 30,
+      y: 120,
+      width: 15,
+      height: Math.max(35, 50 - level * 2),
+      dy: (Math.random() > 0.5 ? 1 : -1) * vertSpeed
+    });
+  }
+
+  // Desenhar e atualizar Horizontais
+  ctx.fillStyle = '#ef4444';
+  for (let i = movingObstacles.length - 1; i >= 0; i--) {
+    let mo = movingObstacles[i];
+    mo.x += mo.dx;
+    mo.shootTimer++;
+
+    // Frequência de disparo de tiros aumenta nas fases superiores (fase 2+)
+    const shootThreshold = Math.max(60, 140 - level * 10);
+    if (level >= 2 && mo.shootTimer > shootThreshold && Math.random() < 0.04) {
+      enemyProjectiles.push({
+        x: mo.x + mo.width / 2,
+        y: mo.y + mo.height,
+        radius: 4,
+        dy: 2.8 + level * 0.3
       });
+      mo.shootTimer = 0;
     }
 
-    ctx.fillStyle = '#ef4444';
-    for (let i = movingObstacles.length - 1; i >= 0; i--) {
-      let mo = movingObstacles[i];
-      mo.x += mo.dx;
+    if (mo.x <= 0 || mo.x + mo.width >= canvas.width) {
+      mo.dx *= -1;
+    }
 
-      // Inverte a direção ao bater nas bordas laterais
-      if (mo.x <= 0 || mo.x + mo.width >= canvas.width) {
-        mo.dx *= -1;
-      }
+    ctx.fillRect(mo.x, mo.y, mo.width, mo.height);
 
-      ctx.fillRect(mo.x, mo.y, mo.width, mo.height);
+    // Colisão bola com obstáculo horizontal
+    if (
+      ball.x > mo.x &&
+      ball.x < mo.x + mo.width &&
+      ball.y > mo.y &&
+      ball.y < mo.y + mo.height
+    ) {
+      ball.dy = -ball.dy;
+      playSound('hit');
+    }
 
-      // Colisão da bola com o obstáculo móvel
-      if (
-        ball.x > mo.x &&
-        ball.x < mo.x + mo.width &&
-        ball.y > mo.y &&
-        ball.y < mo.y + mo.height
-      ) {
+    // Colisão raquete com obstáculo horizontal
+    if (
+      paddle.x < mo.x + mo.width &&
+      paddle.x + paddle.width > mo.x &&
+      paddle.y < mo.y + mo.height &&
+      paddle.y + paddle.height > mo.y
+    ) {
+      movingObstacles.splice(i, 1);
+      lives--;
+      updateHUD();
+      playSound('hazard');
+      handleLifeLossOrReset();
+      return;
+    }
+  }
+
+  // Desenhar e atualizar Verticais
+  ctx.fillStyle = '#f97316';
+  for (let j = verticalObstacles.length - 1; j >= 0; j--) {
+    let vo = verticalObstacles[j];
+    vo.y += vo.dy;
+
+    if (vo.y <= 70 || vo.y + vo.height >= canvas.height - 120) {
+      vo.dy *= -1;
+    }
+
+    ctx.fillRect(vo.x, vo.y, vo.width, vo.height);
+
+    // Colisão bola com obstáculo vertical
+    if (
+      ball.x > vo.x &&
+      ball.x < vo.x + vo.width &&
+      ball.y > vo.y &&
+      ball.y < vo.y + vo.height
+    ) {
+      ball.dx = -ball.dx;
+      playSound('hit');
+    }
+
+    // Colisão raquete com obstáculo vertical
+    if (
+      paddle.x < vo.x + vo.width &&
+      paddle.x + paddle.width > vo.x &&
+      paddle.y < vo.y + vo.height &&
+      paddle.y + paddle.height > vo.y
+    ) {
+      verticalObstacles.splice(j, 1);
+      lives--;
+      updateHUD();
+      playSound('hazard');
+      handleLifeLossOrReset();
+      return;
+    }
+  }
+
+  // Atualizar Projéteis Inimigos
+  for (let p = enemyProjectiles.length - 1; p >= 0; p--) {
+    let proj = enemyProjectiles[p];
+    proj.y += proj.dy;
+
+    // Colisão do projétil com a raquete
+    if (
+      proj.x >= paddle.x &&
+      proj.x <= paddle.x + paddle.width &&
+      proj.y >= paddle.y &&
+      proj.y <= paddle.y + paddle.height
+    ) {
+      enemyProjectiles.splice(p, 1);
+      lives--;
+      updateHUD();
+      playSound('hazard');
+      handleLifeLossOrReset();
+      return;
+    }
+
+    // Remover se sair da tela
+    if (proj.y > canvas.height) {
+      enemyProjectiles.splice(p, 1);
+    }
+  }
+
+  // Colisão com minas estáticas
+  hazardMines.forEach((m) => {
+    if (m.active) {
+      const distX = ball.x - m.x;
+      const distY = ball.y - m.y;
+      const distance = Math.sqrt(distX * distX + distY * distY);
+      if (distance < ball.radius + m.radius) {
+        ball.dx = -ball.dx;
         ball.dy = -ball.dy;
-        playSound('hit');
-      }
-
-      // Colisão da raquete com o obstáculo móvel (perde vida)
-      if (
-        paddle.x < mo.x + mo.width &&
-        paddle.x + paddle.width > mo.x &&
-        paddle.y < mo.y + mo.height &&
-        paddle.y + paddle.height > mo.y
-      ) {
-        movingObstacles.splice(i, 1);
-        lives--;
-        updateHUD();
-        playSound('hit');
-        if (lives <= 0) {
-          saveLeaderboardScore(score);
-          gameStarted = false;
-          if (startOverlay) startOverlay.classList.remove('hidden');
-          renderStatic();
-          return;
-        } else {
-          resetBallAndPaddle();
-          cancelAnimationFrame(animationId);
-          startCountdown(() => {
-            loop();
-          });
-          return;
-        }
+        playSound('hazard');
+        createExplosion(m.x, m.y, '#ef4444');
       }
     }
+  });
+}
+
+function handleLifeLossOrReset() {
+  if (lives <= 0) {
+    saveLeaderboardScore(score);
+    gameStarted = false;
+    if (startOverlay) startOverlay.classList.remove('hidden');
+    renderStatic();
+  } else {
+    resetBallAndPaddle();
+    cancelAnimationFrame(animationId);
+    startCountdown(() => {
+      loop();
+    });
   }
 }
 
@@ -679,7 +857,7 @@ function collisionDetection() {
         ) {
           ball.dy = -ball.dy;
           b.status = 0;
-          score += 10;
+          score += 10 + (level - 1) * 5; // Bônus de pontuação maior por bloco nas fases avançadas
           createExplosion(b.x + brickWidth / 2, b.y + brickHeight / 2, b.color);
           updateHUD();
           playSound('hit');
@@ -691,7 +869,7 @@ function collisionDetection() {
 
   if (activeBricks === 0) {
     level++;
-    ball.baseSpeed += 0.5;
+    ball.baseSpeed += 0.8; // Aumenta a velocidade base a cada nova fase
     updateHUD();
     initBricks();
     resetBallAndPaddle();
@@ -770,6 +948,7 @@ function renderStatic() {
   drawBricks();
   drawPaddle();
   drawBall();
+  drawHazards();
 }
 
 function loop() {
@@ -781,6 +960,7 @@ function loop() {
   drawPaddle();
   drawBall();
   drawPowerups();
+  drawHazards();
   updateParticles();
 
   movePaddle();
