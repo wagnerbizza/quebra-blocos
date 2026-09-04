@@ -1,7 +1,8 @@
 // ==============================================================================
-// 🎮 QUEBRA-BLOCOS ARCADE PRO - CÓDIGO COMPLETO (RANKING TOP 10)
+// 🎮 QUEBRA-BLOCOS ARCADE PRO - CÓDIGO COMPLETO E COMENTADO
 // ==============================================================================
 
+// PASSO 1: Seleção de elementos do HTML (Canvas, HUD, Botões e Modais)
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -28,6 +29,7 @@ const startGameBtn = document.getElementById('start-game-btn');
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
 
+// PASSO 2: Contexto de Áudio e Configurações Iniciais do Jogo
 let audioCtx = null;
 
 const gameSettings = {
@@ -37,6 +39,7 @@ const gameSettings = {
   soundHit: true
 };
 
+// Inicializa a API de Web Audio do navegador mediante interação
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -46,6 +49,7 @@ function initAudio() {
   }
 }
 
+// Reproduz efeitos sonoros dinâmicos sintéticos
 function playSound(type) {
   try {
     if (type === 'hit' && !gameSettings.soundHit) return;
@@ -111,6 +115,7 @@ window.addEventListener('click', initAudio, { once: true });
 window.addEventListener('touchstart', initAudio, { once: true });
 window.addEventListener('keydown', initAudio, { once: true });
 
+// PASSO 3: Sistema de Partículas Visuais para Explosões
 let particles = [];
 
 function createExplosion(x, y, color) {
@@ -144,6 +149,7 @@ function updateParticles() {
   }
 }
 
+// PASSO 4: Variáveis Globais de Estado do Jogo
 let score = 0;
 let highScore = localStorage.getItem('breakout_highscore') || 0;
 let level = 1;
@@ -155,6 +161,7 @@ let animationId = null;
 
 highScoreEl.textContent = highScore;
 
+// Definição da Raquete
 const paddle = {
   width: 75, baseWidth: 75, largeWidth: 120, minWidth: 25, height: 12,
   x: (canvas.width - 75) / 2, y: canvas.height - 25, speed: 7, status: 'normal'
@@ -162,11 +169,13 @@ const paddle = {
 
 const keys = { right: false, left: false };
 
+// Definição da Bola (Com controle anti-travamento horizontal)
 const ball = {
   x: canvas.width / 2, y: canvas.height - 40, radius: 7,
   baseSpeed: 4.0, speed: 4.0, dx: 3.0, dy: -3.0
 };
 
+// Definição dos Blocos
 const brickRowCount = 5;
 const brickColumnCount = 8;
 const brickWidth = 64;
@@ -238,7 +247,7 @@ function applyPowerupEffect(type) {
   }
 }
 
-// Configurações e Menu Interativo
+// PASSO 5: Listeners de Configurações e Controles de Entrada (Teclado e Touch)
 settingsBtn.addEventListener('click', () => {
   if (gameStarted && !isPaused && !isCountingDown) togglePause();
   settingsModal.classList.remove('hidden');
@@ -445,6 +454,7 @@ function updateHUD() {
   }
 }
 
+// PASSO 6: Funções de Renderização Gráfica no Canvas
 function drawPaddle() {
   ctx.beginPath();
   ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 5);
@@ -513,6 +523,7 @@ function drawHazards() {
   });
 }
 
+// PASSO 7: Mecânicas de Movimentação e Colisão
 function movePaddle() {
   if (keys.right) paddle.x += paddle.speed;
   if (keys.left) paddle.x -= paddle.speed;
@@ -686,7 +697,7 @@ function collisionDetection() {
   }
 }
 
-// Alterado para Top 10
+// PASSO 8: Integração Limpa com o Firebase (Sem Cascatas, Usando o Nome como Chave Direta)
 const MAX_LEADERBOARD_ENTRIES = 10;
 
 function saveLeaderboardScore(newScore) {
@@ -697,14 +708,18 @@ function saveLeaderboardScore(newScore) {
   keys.left = false;
   keys.right = false;
 
+  const cleanName = playerName.trim().substring(0, 12);
+
   const scoreData = {
-    name: playerName.trim().substring(0, 12),
     score: newScore,
     timestamp: Date.now()
   };
 
-  database.ref('leaderboard').push(scoreData)
-    .then(() => showLeaderboard())
+  // Grava diretamente usando o nome do jogador como nó (ex: leaderboard/Bizza)
+  database.ref(cleanName).set(scoreData)
+    .then(() => {
+      showLeaderboard();
+    })
     .catch((err) => console.error("Erro ao salvar no Firebase:", err));
 }
 
@@ -725,10 +740,15 @@ function showLeaderboard() {
       const scores = [];
 
       snapshot.forEach((childSnapshot) => {
-        scores.push(childSnapshot.val());
+        // Como agora a chave é o nome, o childSnapshot.key é o nome, e val() contém score e timestamp
+        scores.push({
+          name: childSnapshot.key,
+          score: childSnapshot.val().score
+        });
       });
 
-      scores.reverse();
+      // Ordena decrescentemente (maior pontuação no topo)
+      scores.sort((a, b) => b.score - a.score);
 
       if (scores.length === 0) {
         listEl.innerHTML = '<li>Nenhuma pontuação salva ainda.</li>';
@@ -746,6 +766,7 @@ function showLeaderboard() {
     });
 }
 
+// PASSO 9: Loop Principal do Jogo e Inicialização
 function renderStatic() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBricks();
