@@ -1,5 +1,5 @@
 // ==============================================================================
-// 🎮 QUEBRA-BLOCOS ARCADE PRO - CÓDIGO COMPLETO E COMENTADO
+// 🎮 QUEBRA-BLOCOS ARCADE PRO - CÓDIGO CORRIGIDO (OBSTÁCULOS E BOLINHAS MÓVEIS)
 // ==============================================================================
 
 // PASSO 1: Seleção de elementos do HTML (Canvas, HUD, Botões e Modais)
@@ -169,7 +169,7 @@ const paddle = {
 
 const keys = { right: false, left: false };
 
-// Definição da Bola (Com controle anti-travamento horizontal)
+// Definição da Bola Principal
 const ball = {
   x: canvas.width / 2, y: canvas.height - 40, radius: 7,
   baseSpeed: 4.0, speed: 4.0, dx: 3.0, dy: -3.0
@@ -187,6 +187,7 @@ const brickOffsetLeft = 24;
 let bricks = [];
 let movingObstacles = [];
 let hazardMines = [];
+let wanderingBalls = []; // Novas bolinhas menores em movimento para atrapalhar
 let enemyProjectiles = [];
 let powerups = [];
 
@@ -389,18 +390,35 @@ function resetBallAndPaddle() {
 
   movingObstacles = [];
   hazardMines = [];
+  wanderingBalls = [];
   enemyProjectiles = [];
   initHazards();
 }
 
+// Configuração de Obstáculos Maiores Estáticos e Bolinhas Menores em Movimento
 function initHazards() {
-  const mineCount = Math.min(7, 1 + Math.floor(level * 1.2));
+  // 1. Bolas estáticas maiores (Obstáculos fixos no cenário)
+  const mineCount = Math.min(4, 1 + Math.floor(level * 0.6));
   for (let i = 0; i < mineCount; i++) {
     hazardMines.push({
-      x: 50 + Math.random() * (canvas.width - 100),
-      y: 130 + Math.random() * 140,
-      radius: 8,
+      x: 70 + Math.random() * (canvas.width - 140),
+      y: 130 + Math.random() * 110,
+      radius: 12, // Tamanho maior conforme solicitado
       active: true
+    });
+  }
+
+  // 2. Bolinhas menores em movimento (Apenas algumas para atrapalhar)
+  const wanderingCount = Math.min(3, 1 + Math.floor(level * 0.5));
+  for (let i = 0; i < wanderingCount; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const wandSpeed = 2.0 + Math.random() * 1.5;
+    wanderingBalls.push({
+      x: 80 + Math.random() * (canvas.width - 160),
+      y: 150 + Math.random() * 100,
+      radius: 4.5, // Bolinhas bem menores
+      dx: Math.cos(angle) * wandSpeed,
+      dy: Math.sin(angle) * wandSpeed
     });
   }
 }
@@ -504,14 +522,24 @@ function drawPowerups() {
 }
 
 function drawHazards() {
+  // Renderiza as bolas estáticas maiores como obstáculos fixos amarelos
   hazardMines.forEach((m) => {
     if (m.active) {
       ctx.beginPath();
       ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
-      ctx.fillStyle = '#dc2626';
+      ctx.fillStyle = '#facc15';
       ctx.fill();
       ctx.closePath();
     }
+  });
+
+  // Renderiza as bolinhas menores em movimento para atrapalhar
+  ctx.fillStyle = '#f97316';
+  wanderingBalls.forEach((wb) => {
+    ctx.beginPath();
+    ctx.arc(wb.x, wb.y, wb.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.closePath();
   });
 
   ctx.fillStyle = '#fbbf24';
@@ -607,6 +635,30 @@ function movePowerups() {
 }
 
 function updateAndDrawMovingObstacles() {
+  // Atualiza as bolinhas menores em movimento
+  wanderingBalls.forEach((wb) => {
+    wb.x += wb.dx;
+    wb.y += wb.dy;
+
+    // Rebater nas paredes da área de jogo
+    if (wb.x - wb.radius <= 20 || wb.x + wb.radius >= canvas.width - 20) {
+      wb.dx *= -1;
+    }
+    if (wb.y - wb.radius <= 40 || wb.y + wb.radius >= canvas.height - 100) {
+      wb.dy *= -1;
+    }
+
+    // Colisão da bola principal com as bolinhas móveis (atrapalha mudando a direção da bola principal)
+    const distX = ball.x - wb.x;
+    const distY = ball.y - wb.y;
+    const distance = Math.sqrt(distX * distX + distY * distY);
+    if (distance < ball.radius + wb.radius) {
+      ball.dx = -ball.dx;
+      ball.dy = -ball.dy;
+      playSound('move');
+    }
+  });
+
   const maxHorizObstacles = Math.min(4, 1 + Math.floor(level * 0.7));
   const spawnChanceHoriz = 0.004 + level * 0.0025;
 
@@ -639,6 +691,7 @@ function updateAndDrawMovingObstacles() {
     }
   }
 
+  // Verificação de colisão com as bolas estáticas maiores (funcionam como obstáculos físicos que rebatem a bola)
   hazardMines.forEach((m) => {
     if (m.active) {
       const distX = ball.x - m.x;
@@ -646,18 +699,9 @@ function updateAndDrawMovingObstacles() {
       const distance = Math.sqrt(distX * distX + distY * distY);
       
       if (distance < ball.radius + m.radius) {
-        playSound('hazard');
-        createExplosion(m.x, m.y, '#ef4444');
-
-        const nx = distX / (distance || 1);
-        const ny = distY / (distance || 1);
-        const overlap = (ball.radius + m.radius) - distance;
-        ball.x += nx * overlap;
-        ball.y += ny * overlap;
-
-        const dotProduct = ball.dx * nx + ball.dy * ny;
-        ball.dx = ball.dx - 2 * dotProduct * nx;
-        ball.dy = ball.dy - 2 * dotProduct * ny;
+        ball.dx = -ball.dx;
+        ball.dy = -ball.dy;
+        playSound('move');
       }
     }
   });
@@ -697,78 +741,60 @@ function collisionDetection() {
   }
 }
 
-// PASSO 8: Integração Limpa com o Firebase (Apenas Nome e Pontuação Direta na Raiz)
+// PASSO 8: Integração com o Firebase
 const MAX_LEADERBOARD_ENTRIES = 10;
 
-// Função para salvar a pontuação do jogador diretamente no nó raiz do Firebase
 function saveLeaderboardScore(newScore) {
-  // Ignora o salvamento caso a pontuação seja menor ou igual a zero
   if (newScore <= 0) return;
 
-  // Abre uma janela para o usuário digitar o nome, definindo um padrão caso cancele
   const playerName = prompt(`🎉 Fim de jogo! Você fez ${newScore} pontos.\nDigite seu nome para o Ranking:`) || "Jogador Anônimo";
 
-  // Reseta os estados das teclas para evitar que a raquete continue se movimentando sozinha
   keys.left = false;
   keys.right = false;
 
-  // Remove espaços extras e limita o nome digitado a no máximo 12 caracteres
   const cleanName = playerName.trim().substring(0, 12);
 
-  // Envia diretamente para a raiz do banco usando apenas o nome limpo e salvando somente o número da pontuação
   database.ref(cleanName).set(newScore)
     .then(() => {
-      // Exibe o ranking automaticamente logo após salvar com sucesso
       showLeaderboard();
     })
-    .catch((err) => console.error("Erro ao salvar no Firebase:", err)); // Registra no console se houver erro
+    .catch((err) => console.error("Erro ao salvar no Firebase:", err));
 }
 
-// Função para carregar e exibir o ranking global na tela
 function showLeaderboard() {
   const listEl = document.getElementById('leaderboard-list');
   const modal = document.getElementById('leaderboard-modal');
 
-  // Verifica se os elementos do modal de ranking existem na página HTML
   if (!listEl || !modal) return;
 
-  // Mostra uma mensagem de carregamento inicial na tela
   listEl.innerHTML = '<li>Carregando ranking...</li>';
-  modal.classList.remove('hidden'); // Torna o modal visível para o usuário
+  modal.classList.remove('hidden');
 
-  // Faz a leitura de todos os dados salvos diretamente na raiz do banco de dados do Firebase
   database.ref().once('value', (snapshot) => {
-    listEl.innerHTML = ''; // Limpa a lista de carregamento
+    listEl.innerHTML = '';
     const scores = [];
 
-    // Percorre cada propriedade encontrada na raiz do banco
     snapshot.forEach((childSnapshot) => {
-      // childSnapshot.key é o nome do jogador e childSnapshot.val() é o valor numérico direto da pontuação
       scores.push({
         name: childSnapshot.key,
         score: childSnapshot.val()
       });
     });
 
-    // Ordena os jogadores em ordem decrescente (da maior pontuação para a menor)
     scores.sort((a, b) => b.score - a.score);
-
-    // Seleciona apenas os melhores colocados com base no limite máximo estabelecido
     const topScores = scores.slice(0, MAX_LEADERBOARD_ENTRIES);
 
-    // Verifica se a lista está vazia e exibe aviso, caso contrário monta os itens na tela
     if (topScores.length === 0) {
       listEl.innerHTML = '<li>Nenhuma pontuação salva ainda.</li>';
     } else {
       topScores.forEach((entry, index) => {
         const li = document.createElement('li');
         li.innerHTML = `<strong>#${index + 1} ${entry.name}</strong>: ${entry.score} pts`;
-        listEl.appendChild(li); // Insere o item formatado na lista HTML
+        listEl.appendChild(li);
       });
     }
   })
   .catch((err) => {
-    // Exibe mensagem de erro amigável se houver falha de conexão ou permissão
     listEl.innerHTML = '<li>Erro ao carregar o ranking.</li>';
     console.error(err);
   });
