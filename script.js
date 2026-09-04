@@ -1,5 +1,5 @@
 // ==============================================================================
-// 🎮 QUEBRA-BLOCOS ARCADE PRO - CÓDIGO CORRIGIDO E DEFINITIVO
+// 🎮 QUEBRA-BLOCOS ARCADE PRO - CÓDIGO COMPLETO (RANKING TOP 10)
 // ==============================================================================
 
 const canvas = document.getElementById('gameCanvas');
@@ -370,8 +370,7 @@ function resetBallAndPaddle() {
   ball.x = canvas.width / 2;
   ball.y = canvas.height - 40;
   
-  // Ângulo aleatório que impede a bola de ficar travada na horizontal (mínimo de 30° de inclinação vertical)
-  const minAngle = Math.PI / 6; // 30 graus
+  const minAngle = Math.PI / 6;
   const maxAngle = Math.PI / 2.5;
   const randomAngle = (Math.random() * (maxAngle - minAngle)) + minAngle;
   const direction = Math.random() > 0.5 ? 1 : -1;
@@ -550,12 +549,11 @@ function moveBall() {
   ) {
     let collidePoint = ball.x - (paddle.x + paddle.width / 2);
     collidePoint = collidePoint / (paddle.width / 2);
-    let angle = collidePoint * (Math.PI / 2.5); // Limita o ângulo máximo de rebatida
+    let angle = collidePoint * (Math.PI / 2.5);
 
     ball.dx = ball.speed * Math.sin(angle);
-    ball.dy = -Math.abs(ball.speed * Math.cos(angle)); // Garante que a bola sempre vá para cima
+    ball.dy = -Math.abs(ball.speed * Math.cos(angle));
 
-    // Trava anti-horizontal absoluta: se dy for muito baixo, força subida
     if (Math.abs(ball.dy) < 1.5) {
       ball.dy = -1.5;
     }
@@ -688,7 +686,8 @@ function collisionDetection() {
   }
 }
 
-const MAX_LEADERBOARD_ENTRIES = 5;
+// Alterado para Top 10
+const MAX_LEADERBOARD_ENTRIES = 10;
 
 function saveLeaderboardScore(newScore) {
   if (newScore <= 0) return;
@@ -734,9 +733,9 @@ function showLeaderboard() {
       if (scores.length === 0) {
         listEl.innerHTML = '<li>Nenhuma pontuação salva ainda.</li>';
       } else {
-        scores.forEach((entry) => {
+        scores.forEach((entry, index) => {
           const li = document.createElement('li');
-          li.innerHTML = `<strong>${entry.name}</strong>: ${entry.score} pts`;
+          li.innerHTML = `<strong>#${index + 1} ${entry.name}</strong>: ${entry.score} pts`;
           listEl.appendChild(li);
         });
       }
