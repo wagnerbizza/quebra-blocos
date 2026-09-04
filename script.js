@@ -732,7 +732,7 @@ function showLeaderboard() {
   listEl.innerHTML = '<li>Carregando ranking global...</li>';
   modal.classList.remove('hidden');
 
-  database.ref('leaderboard')
+  database.ref('cleanName')
     .orderByChild('score')
     .limitToLast(MAX_LEADERBOARD_ENTRIES)
     .once('value', (snapshot) => {
